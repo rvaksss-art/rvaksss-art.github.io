@@ -49,3 +49,5 @@ header.header.cinematic-header.is-scrolled:before{opacity:.96}
   body:not(.paused) .glyph:hover .case-trace{stroke-dashoffset:0}
 }
 .scene-halo{filter:none;opacity:.45}
+
+#cube-stage canvas{touch-action:auto;-webkit-touch-callout:none;user-select:none}
