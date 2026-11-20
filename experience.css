@@ -36,3 +36,16 @@ header.header.cinematic-header.is-scrolled:before{opacity:.96}
 .scene-halo{inset:8%;background:radial-gradient(ellipse at 60% 22%,#c6a57514,transparent 49%),radial-gradient(ellipse at 32% 60%,#97dbb71c,transparent 56%)}
 .scene-controls{bottom:-10px}
 @media(prefers-reduced-motion:reduce){#motion-toggle{display:none}}
+.case-lens,.case-shutter{transform-origin:150px 70px;transition:transform .9s var(--ease)}
+.case-trace{stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset .9s ease;pointer-events:none}
+@media(prefers-reduced-motion:no-preference){
+  body:not(.paused) .portal:focus-visible .case-lens{transform:rotate(-14deg) scale(1.06)}
+  body:not(.paused) .portal:focus-visible .case-shutter{transform:rotate(90deg) scale(.9)}
+  body:not(.paused) .portal:focus-visible .case-trace{stroke-dashoffset:0}
+}
+@media(hover:hover) and (prefers-reduced-motion:no-preference){
+  body:not(.paused) .glyph:hover .case-lens{transform:rotate(-14deg) scale(1.06)}
+  body:not(.paused) .glyph:hover .case-shutter{transform:rotate(90deg) scale(.9)}
+  body:not(.paused) .glyph:hover .case-trace{stroke-dashoffset:0}
+}
+.scene-halo{filter:none;opacity:.45}

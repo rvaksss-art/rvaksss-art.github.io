@@ -1,3 +1,4 @@
+import { engravedFace, polishedGlass } from './finishes.js';
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 
@@ -63,6 +64,11 @@ function buildMechanism(index, group) {
       ticks.setMatrixAt(i,tick.matrix);
     }
     group.add(ticks);
+    const inscription = engravedFace(group,'dial',.56);
+    inscription.position.z = .052;
+    const reverse = engravedFace(group,'dial',.71);
+    reverse.rotation.y = Math.PI;
+    reverse.position.z = -.052;
     mesh(group,new THREE.SphereGeometry(.098,24,16),alloy,0,0,.065).scale.z=.55;
     mesh(group,new THREE.SphereGeometry(.037,16,12),accent,.27,0,.077);
     return (t, spread) => {group.rotation.z = .35+t*.13; group.rotation.x=.15+spread*.18;};
@@ -74,6 +80,9 @@ function buildMechanism(index, group) {
       const side=[.73,.61,.69,.58,.5][i];
       layers.push(mesh(group,new RoundedBoxGeometry(side,.082,side,2,.035),[graphite,alloy,graphite,accent,alloy][i]));
     }
+    const seal = engravedFace(layers[4],'seal',.415);
+    seal.rotation.x = -Math.PI/2;
+    seal.position.y = .042;
     return (t, spread) => {
       layers.forEach((layer,i)=>{layer.position.y=(i-2)*(.09+.07*spread);});
       group.rotation.y=.25+t*.10;
@@ -92,6 +101,12 @@ function buildMechanism(index, group) {
     contour(frame,r,.07);
     const hole=new THREE.Path();contour(hole,r-.05,.045);frame.holes.push(hole);
     frames.push(mesh(group,new THREE.ExtrudeGeometry(frame,{depth:.047,bevelSize:.009,bevelThickness:.009,bevelSegments:2}),[alloy,graphite,accent][i]));
+  }
+  for(let side=0;side<4;side++){
+    const angle=side*Math.PI/2;
+    const band=engravedFace(frames[0],'border',.56,.039);
+    band.position.set(-Math.sin(angle)*.357,Math.cos(angle)*.357,.057);
+    band.rotation.z=angle;
   }
   mesh(group,new THREE.OctahedronGeometry(.14),alloy);
   return (t,spread)=>{frames.forEach((f,i)=>{f.position.z=(i-1)*(.067+.11*spread);});group.rotation.y=-.38+Math.sin(t*.32)*.20;group.rotation.z=-.12;};
@@ -115,9 +130,8 @@ export function createScene(host, reduce) {
   const edges=new THREE.EdgesGeometry(new THREE.BoxGeometry(1.30,1.30,1.30));
   const modules=poses.map((pose,i)=>{
     const cube=new THREE.Group();system.add(cube);
-    const glass=new THREE.MeshPhysicalMaterial({color:i===0?0xe7c99b:0xa4d7bd,transparent:true,opacity:.12,
-      roughness:.12,metalness:.48,clearcoat:1,depthWrite:false});
-    mesh(cube,shell,glass);
+    const glass=polishedGlass(i===0?0xdfc299:0xa4d7bd);
+    mesh(cube,shell,glass).renderOrder=2;
     const outline=new THREE.LineBasicMaterial({transparent:true,opacity:.49});
     cube.add(new THREE.LineSegments(edges,outline));
     const mechanism=new THREE.Group();cube.add(mechanism);
@@ -125,7 +139,7 @@ export function createScene(host, reduce) {
   });
 
   let elapsed=0, last=0, frame=0, visible=false, paused=reduce.matches, lost=false;
-  let targetX=0,targetY=0,dragging=false,lastX=0,yaw=0;
+  let targetX=0,targetY=0,dragging=false,lastX=0,lastY=0,yaw=0,pitch=0,displayPitch=0;
   const canvas=renderer.domElement;
   function draw(){if(!lost)renderer.render(scene,camera);}
   function compose(){
@@ -134,7 +148,7 @@ export function createScene(host, reduce) {
     modules.forEach(({cube,pose,update},i)=>{
       cube.position.set(pose.x*(.29+.71*spread),pose.y*(.50+.5*spread),pose.z);
       cube.scale.setScalar(.76+.24*spread);
-      cube.rotation.set(.29+.12*Math.sin(elapsed*.24+i),.48+i*.12+elapsed*(i===1?-.042:.046),.035*(i-1));
+      cube.rotation.set(displayPitch+.29+.12*Math.sin(elapsed*.24+i),.48+i*.12+elapsed*(i===1?-.042:.046),.035*(i-1));
       update(elapsed,spread);
     });
   }
@@ -142,6 +156,7 @@ export function createScene(host, reduce) {
     frame=0;
     const delta=(now-last)/1000;last=now;elapsed+=delta;
     const response=1-Math.exp(-5*delta);
+    displayPitch+=(pitch-displayPitch)*response;
     const scroll=Math.min(scrollY/Math.max(innerHeight,1),1);
     system.rotation.y+=(yaw+targetX*.15+scroll*.12-system.rotation.y)*response;
     system.rotation.x+=(targetY*.10-system.rotation.x)*response;
@@ -164,9 +179,14 @@ export function createScene(host, reduce) {
     if(paused||e.pointerType==='touch')return;
     const bounds=canvas.getBoundingClientRect();
     targetX=(e.clientX-bounds.left)/bounds.width*2-1;targetY=(e.clientY-bounds.top)/bounds.height*2-1;
-    if(dragging)yaw+=(e.clientX-lastX)*.005;lastX=e.clientX;
+    if(dragging){
+      yaw+=(e.clientX-lastX)*.006;
+      pitch+=(e.clientY-lastY)*.009;
+      lastX=e.clientX;
+      lastY=e.clientY;
+    }
   });
-  canvas.addEventListener('pointerdown',e=>{if(!paused&&e.pointerType!=='touch'){dragging=true;lastX=e.clientX;canvas.setPointerCapture(e.pointerId);}});
+  canvas.addEventListener('pointerdown',e=>{if(!paused&&e.isPrimary&&e.button===0&&e.pointerType!=='touch'){dragging=true;lastX=e.clientX;lastY=e.clientY;canvas.setPointerCapture(e.pointerId);}});
   canvas.addEventListener('lostpointercapture',()=>{dragging=false;});
   canvas.addEventListener('pointerleave',()=>{targetX=targetY=0;});
   canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();lost=true;schedule();host.parentElement.classList.remove('webgl-ready');});
