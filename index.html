@@ -10,7 +10,17 @@
 <link rel="stylesheet" href="./portfolio-header.css">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="./assets/fonts/cormorant-garamond-cyrillic-400-normal.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="./assets/fonts/cormorant-garamond-latin-400-normal.woff2">
-<link rel="stylesheet" href="./experience.css?v=hero-type-20261120-3">
+<link rel="stylesheet" href="./experience.css?v=hero-serif-20261120-4">
+<style id="hero-serif-critical">
+/* Keep both heading runs serif even while external styles and webfonts load. */
+.hero #heading,
+.hero #heading em {
+  font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif !important;
+  font-weight: 400;
+  font-style: normal;
+  font-synthesis: none;
+}
+</style>
 </head>
 <body>
 <a data-copy="16" href="#projects" class="skip">К проектам</a>
