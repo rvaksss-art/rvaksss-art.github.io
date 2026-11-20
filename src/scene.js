@@ -114,7 +114,7 @@ function buildMechanism(index, group) {
 
 export function createScene(host, reduce) {
   const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:'low-power'});
-  renderer.setPixelRatio(Math.min(devicePixelRatio,matchMedia('(max-width:760px)').matches?1.4:1.7));
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 3));
   renderer.setClearColor(0,0);
   renderer.toneMapping=THREE.ACESFilmicToneMapping;
   host.append(renderer.domElement);
@@ -175,40 +175,36 @@ export function createScene(host, reduce) {
   new MutationObserver(theme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
   new IntersectionObserver(([entry])=>{visible=entry.isIntersecting;schedule();}).observe(host);
   document.addEventListener('visibilitychange',schedule);
-  // Keep one-finger page scrolling native until the stationary hold is recognised.
-  let holdTimer;
-  let fingerId=null, touchActive=false, originX=0, originY=0;
-  function releaseFinger(){
-    clearTimeout(holdTimer);
-    fingerId=null;
-    touchActive=false;
+  // The canvas owns a single-finger gesture immediately; surrounding content scrolls normally.
+  let fingerId = null;
+  function releaseFinger() {
+    fingerId = null;
   }
-  canvas.addEventListener('touchstart',event=>{
+  canvas.addEventListener('touchstart', event => {
     releaseFinger();
-    if(paused || event.touches.length!==1)return;
-    const finger=event.touches[0];
-    fingerId=finger.identifier;
-    originX=lastX=finger.clientX;
-    originY=lastY=finger.clientY;
-    holdTimer=setTimeout(()=>{touchActive=true;},320);
-  },{passive:true});
-  canvas.addEventListener('touchmove',event=>{
-    const finger=event.touches[0];
-    if(paused || event.touches.length!==1 || finger.identifier!==fingerId || !event.cancelable){
-      releaseFinger();return;
-    }
-    if(!touchActive){
-      if(Math.hypot(finger.clientX-originX,finger.clientY-originY)>8)releaseFinger();
+    if (paused || event.touches.length !== 1) return;
+    const finger = event.touches[0];
+    fingerId = finger.identifier;
+    lastX = finger.clientX;
+    lastY = finger.clientY;
+  }, {passive: true});
+  canvas.addEventListener('touchmove', event => {
+    const finger = event.touches[0];
+    if (paused || event.touches.length !== 1 || finger.identifier !== fingerId) {
+      releaseFinger();
       return;
     }
-    event.preventDefault();
-    yaw+=(finger.clientX-lastX)*.008;
-    pitch+=(finger.clientY-lastY)*.009;
-    lastX=finger.clientX;lastY=finger.clientY;
-  },{passive:false});
-  canvas.addEventListener('touchend',releaseFinger,{passive:true});
-  canvas.addEventListener('touchcancel',releaseFinger,{passive:true});
-  canvas.addEventListener('contextmenu',event=>{if(fingerId!==null)event.preventDefault();});
+    if (event.cancelable) event.preventDefault();
+    yaw += (finger.clientX - lastX) * .008;
+    pitch += (finger.clientY - lastY) * .009;
+    lastX = finger.clientX;
+    lastY = finger.clientY;
+  }, {passive: false});
+  canvas.addEventListener('touchend', releaseFinger, {passive: true});
+  canvas.addEventListener('touchcancel', releaseFinger, {passive: true});
+  canvas.addEventListener('contextmenu', event => {
+    if (fingerId !== null) event.preventDefault();
+  });
   canvas.addEventListener('pointermove',e=>{
     if(paused||e.pointerType==='touch')return;
     const bounds=canvas.getBoundingClientRect();

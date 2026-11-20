@@ -50,4 +50,4 @@ header.header.cinematic-header.is-scrolled:before{opacity:.96}
 }
 .scene-halo{filter:none;opacity:.45}
 
-#cube-stage canvas{touch-action:auto;-webkit-touch-callout:none;user-select:none}
+#cube-stage canvas{touch-action:none;-webkit-touch-callout:none;user-select:none}
