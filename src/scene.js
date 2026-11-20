@@ -112,7 +112,7 @@ function buildMechanism(index, group) {
   return (t,spread)=>{frames.forEach((f,i)=>{f.position.z=(i-1)*(.067+.11*spread);});group.rotation.y=-.38+Math.sin(t*.32)*.20;group.rotation.z=-.12;};
 }
 
-export function createScene(host, reduce) {
+export function createScene(host) {
   const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:'low-power'});
   renderer.setPixelRatio(Math.min(devicePixelRatio, 3));
   renderer.setClearColor(0,0);
@@ -138,12 +138,12 @@ export function createScene(host, reduce) {
     return {cube,pose,outline,update:buildMechanism(i,mechanism)};
   });
 
-  let elapsed=0, last=0, frame=0, visible=false, paused=reduce.matches, lost=false;
+  let elapsed=0, last=0, frame=0, visible=false, lost=false;
   let targetX=0,targetY=0,lastX=0,lastY=0,yaw=0,pitch=0,displayPitch=0;
   const canvas=renderer.domElement;
   function draw(){if(!lost)renderer.render(scene,camera);}
   function compose(){
-    const phase=reduce.matches?1:Math.min(elapsed/openingDuration,1);
+    const phase=Math.min(elapsed/openingDuration,1);
     const spread=phase*phase*(3-2*phase);
     modules.forEach(({cube,pose,update},i)=>{
       cube.position.set(pose.x*(.29+.71*spread),pose.y*(.50+.5*spread),pose.z);
@@ -164,7 +164,7 @@ export function createScene(host, reduce) {
   }
   function schedule(){
     cancelAnimationFrame(frame);frame=0;
-    if(visible&&!document.hidden&&!paused&&!lost){last=performance.now();frame=requestAnimationFrame(tick);}
+    if(visible&&!document.hidden&&!lost){last=performance.now();frame=requestAnimationFrame(tick);}
   }
   function resize(){const {width,height}=host.getBoundingClientRect();if(!width||!height)return;
     renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();draw();}
@@ -177,13 +177,6 @@ export function createScene(host, reduce) {
   document.addEventListener('visibilitychange',schedule);
   // Pointer capture keeps the gesture active even when the finger leaves a cube.
   let activePointer = null;
-  function updateManualPose() {
-    if (!paused) return;
-    displayPitch = pitch;
-    system.rotation.y = yaw;
-    compose();
-    draw();
-  }
   canvas.addEventListener('pointerdown', event => {
     if (!event.isPrimary || event.button !== 0) return;
     activePointer = event.pointerId;
@@ -198,10 +191,9 @@ export function createScene(host, reduce) {
       pitch += (event.clientY - lastY) * .009;
       lastX = event.clientX;
       lastY = event.clientY;
-      updateManualPose();
       return;
     }
-    if (event.pointerType === 'touch' || paused) return;
+    if (event.pointerType === 'touch') return;
     const bounds = canvas.getBoundingClientRect();
     targetX = (event.clientX - bounds.left) / bounds.width * 2 - 1;
     targetY = (event.clientY - bounds.top) / bounds.height * 2 - 1;
@@ -217,5 +209,4 @@ export function createScene(host, reduce) {
   canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();lost=true;schedule();host.parentElement.classList.remove('webgl-ready');});
   canvas.addEventListener('webglcontextrestored',()=>{lost=false;resize();host.parentElement.classList.add('webgl-ready');schedule();});
   host.parentElement.classList.add('webgl-ready');
-  return {setPaused(value){paused=value;if(reduce.matches){elapsed=openingDuration;compose();draw();}schedule();}};
 }

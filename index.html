@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="./portfolio-header.css">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="./assets/fonts/cormorant-garamond-cyrillic-400-normal.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="./assets/fonts/cormorant-garamond-latin-400-normal.woff2">
-<link rel="stylesheet" href="./experience.css?v=hero-serif-20261120-4">
+<link rel="stylesheet" href="./experience.css?v=continuous-20261120-5">
 <style id="hero-serif-critical">
 /* Keep both heading runs serif even while external styles and webfonts load. */
 .hero #heading,
@@ -32,7 +32,7 @@
 <div class="instrument" aria-label="SYSTEM / BUSINESS / PRODUCT">
 <div class="scene-halo" aria-hidden="true"></div><div id="cube-stage" aria-hidden="true"></div>
 <div class="scene-label label-system">SYSTEM</div><div class="scene-label label-business">BUSINESS</div><div class="scene-label label-product">PRODUCT</div>
-<div class="scene-controls"><button id="motion-toggle" type="button" aria-pressed="false" aria-label="Приостановить анимацию"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3v10M11 3v10"/></svg></button></div>
+
 <svg class="scene-fallback" viewBox="0 0 400 320" fill="none" aria-hidden="true">
 <defs><lineargradient id="glass" x1="100" y1="50" x2="300" y2="240" gradientUnits="userSpaceOnUse"><stop stop-color="#b3e8cd" stop-opacity=".18" /><stop offset=".55" stop-color="#b3e8cd" stop-opacity=".03" /><stop offset="1" stop-color="#b3e8cd" stop-opacity=".09" /></lineargradient><lineargradient id="edge"><stop stop-color="#b3e8cd" stop-opacity=".12" /><stop offset=".5" stop-color="#b3e8cd" stop-opacity=".8" /><stop offset="1" stop-color="#b3e8cd" stop-opacity=".2" /></lineargradient><radialgradient id="glow"><stop stop-color="#b3e8cd" stop-opacity=".8" /><stop offset="1" stop-color="#b3e8cd" stop-opacity="0" /></radialgradient></defs>
 <path d="M200 18v274M36 155h328" stroke="#b3e8cd" stroke-opacity=".09" stroke-dasharray="2 6" />
@@ -71,6 +71,6 @@ const button=document.querySelector(casePage?'#portfolio-language':page==='0'?'#
 const theme=document.querySelector('#portal-theme');if(theme)theme.addEventListener('click',()=>{const value=document.documentElement.dataset.theme==='light'?'dark':'light';document.documentElement.dataset.theme=value;try{localStorage.setItem('mk-theme',value)}catch{}labels()});
 if(!demo)writeLanguage();apply();if(casePage&&typeof current==='number'&&current>=0)fitCardCopy(cards[current]);if(!demo)new MutationObserver(()=>{lang=document.documentElement.lang;writeLanguage();apply()}).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});if(!demo){const observer=new MutationObserver(records=>{observer.disconnect();for(const record of records){if(record.type==='characterData')translate(record.target);else for(const node of record.addedNodes)if(node.nodeType===1||node.nodeType===3)translate(node)}observer.observe(document.body,{subtree:true,childList:true,characterData:true})});observer.observe(document.body,{subtree:true,childList:true,characterData:true})}
 })();
-</script><script type="module" src="./assets/experience.js?v=hero-type-20261120-3"></script></body>
+</script><script type="module" src="./assets/experience.js?v=continuous-20261120-5"></script></body>
 </html>
 
