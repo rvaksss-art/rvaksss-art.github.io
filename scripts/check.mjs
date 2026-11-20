@@ -9,6 +9,7 @@ assert.deepEqual(links(html),links(original),'All external destination URLs pres
 const copy=s=>[...s.matchAll(/data-copy="(\d+)"[^>]*>([\s\S]*?)<\/(?:h1|h2|h3|p|span|a)>/g)].map(x=>[x[1],x[2]]);
 assert.deepEqual(copy(html),copy(original),'Original Russian content preserved');
 assert.equal(html.match(/const copy=([\s\S]+?);let lang/)[1],original.match(/const copy=([\s\S]+?);let lang/)[1],'Both complete language dictionaries preserved');
-for(const path of [...html.matchAll(/(?:src|href)="\.\/([^"]+)"/g)].map(x=>x[1]))assert(existsSync(path),`Missing ${path}`);
+for(const path of [...html.matchAll(/(?:src|href)="\.\/([^"]+)"/g)].map(x=>x[1]))assert(existsSync(path.split('?')[0]),`Missing ${path}`);
 for(const name of readdirSync('assets').filter(s=>s.endsWith('.js')))console.log(`${name}: ${(gzipSync(readFileSync('assets/'+name)).length/1024).toFixed(1)} KiB gzip`);
 console.log('PASS: all original links, visible copy, bilingual dictionaries, and entry assets preserved.');
+

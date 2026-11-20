@@ -139,7 +139,7 @@ export function createScene(host, reduce) {
   });
 
   let elapsed=0, last=0, frame=0, visible=false, paused=reduce.matches, lost=false;
-  let targetX=0,targetY=0,dragging=false,lastX=0,lastY=0,yaw=0,pitch=0,displayPitch=0;
+  let targetX=0,targetY=0,lastX=0,lastY=0,yaw=0,pitch=0,displayPitch=0;
   const canvas=renderer.domElement;
   function draw(){if(!lost)renderer.render(scene,camera);}
   function compose(){
@@ -175,50 +175,45 @@ export function createScene(host, reduce) {
   new MutationObserver(theme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
   new IntersectionObserver(([entry])=>{visible=entry.isIntersecting;schedule();}).observe(host);
   document.addEventListener('visibilitychange',schedule);
-  // The canvas owns a single-finger gesture immediately; surrounding content scrolls normally.
-  let fingerId = null;
-  function releaseFinger() {
-    fingerId = null;
+  // Pointer capture keeps the gesture active even when the finger leaves a cube.
+  let activePointer = null;
+  function updateManualPose() {
+    if (!paused) return;
+    displayPitch = pitch;
+    system.rotation.y = yaw;
+    compose();
+    draw();
   }
-  canvas.addEventListener('touchstart', event => {
-    releaseFinger();
-    if (paused || event.touches.length !== 1) return;
-    const finger = event.touches[0];
-    fingerId = finger.identifier;
-    lastX = finger.clientX;
-    lastY = finger.clientY;
-  }, {passive: true});
-  canvas.addEventListener('touchmove', event => {
-    const finger = event.touches[0];
-    if (paused || event.touches.length !== 1 || finger.identifier !== fingerId) {
-      releaseFinger();
+  canvas.addEventListener('pointerdown', event => {
+    if (!event.isPrimary || event.button !== 0) return;
+    activePointer = event.pointerId;
+    lastX = event.clientX;
+    lastY = event.clientY;
+    canvas.setPointerCapture(event.pointerId);
+  });
+  canvas.addEventListener('pointermove', event => {
+    if (event.pointerId === activePointer) {
+      event.preventDefault();
+      yaw += (event.clientX - lastX) * .008;
+      pitch += (event.clientY - lastY) * .009;
+      lastX = event.clientX;
+      lastY = event.clientY;
+      updateManualPose();
       return;
     }
-    if (event.cancelable) event.preventDefault();
-    yaw += (finger.clientX - lastX) * .008;
-    pitch += (finger.clientY - lastY) * .009;
-    lastX = finger.clientX;
-    lastY = finger.clientY;
-  }, {passive: false});
-  canvas.addEventListener('touchend', releaseFinger, {passive: true});
-  canvas.addEventListener('touchcancel', releaseFinger, {passive: true});
-  canvas.addEventListener('contextmenu', event => {
-    if (fingerId !== null) event.preventDefault();
+    if (event.pointerType === 'touch' || paused) return;
+    const bounds = canvas.getBoundingClientRect();
+    targetX = (event.clientX - bounds.left) / bounds.width * 2 - 1;
+    targetY = (event.clientY - bounds.top) / bounds.height * 2 - 1;
   });
-  canvas.addEventListener('pointermove',e=>{
-    if(paused||e.pointerType==='touch')return;
-    const bounds=canvas.getBoundingClientRect();
-    targetX=(e.clientX-bounds.left)/bounds.width*2-1;targetY=(e.clientY-bounds.top)/bounds.height*2-1;
-    if(dragging){
-      yaw+=(e.clientX-lastX)*.006;
-      pitch+=(e.clientY-lastY)*.009;
-      lastX=e.clientX;
-      lastY=e.clientY;
-    }
-  });
-  canvas.addEventListener('pointerdown',e=>{if(!paused&&e.isPrimary&&e.button===0&&e.pointerType!=='touch'){dragging=true;lastX=e.clientX;lastY=e.clientY;canvas.setPointerCapture(e.pointerId);}});
-  canvas.addEventListener('lostpointercapture',()=>{dragging=false;});
-  canvas.addEventListener('pointerleave',()=>{targetX=targetY=0;});
+  function endDrag(event) {
+    if (event.pointerId === activePointer) activePointer = null;
+  }
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+  canvas.addEventListener('lostpointercapture', endDrag);
+  canvas.addEventListener('pointerleave', () => { targetX = targetY = 0; });
+  canvas.addEventListener('contextmenu', event => event.preventDefault());
   canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();lost=true;schedule();host.parentElement.classList.remove('webgl-ready');});
   canvas.addEventListener('webglcontextrestored',()=>{lost=false;resize();host.parentElement.classList.add('webgl-ready');schedule();});
   host.parentElement.classList.add('webgl-ready');

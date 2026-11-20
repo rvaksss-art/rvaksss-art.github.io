@@ -8,7 +8,7 @@
 <title>Максим Курылёв — Products & Perspective</title>
 
 <link rel="stylesheet" href="./portfolio-header.css">
-<link rel="stylesheet" href="./experience.css">
+<link rel="stylesheet" href="./experience.css?v=mobile-20261120-2">
 </head>
 <body>
 <a data-copy="16" href="#projects" class="skip">К проектам</a>
@@ -59,6 +59,6 @@ const button=document.querySelector(casePage?'#portfolio-language':page==='0'?'#
 const theme=document.querySelector('#portal-theme');if(theme)theme.addEventListener('click',()=>{const value=document.documentElement.dataset.theme==='light'?'dark':'light';document.documentElement.dataset.theme=value;try{localStorage.setItem('mk-theme',value)}catch{}labels()});
 if(!demo)writeLanguage();apply();if(casePage&&typeof current==='number'&&current>=0)fitCardCopy(cards[current]);if(!demo)new MutationObserver(()=>{lang=document.documentElement.lang;writeLanguage();apply()}).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});if(!demo){const observer=new MutationObserver(records=>{observer.disconnect();for(const record of records){if(record.type==='characterData')translate(record.target);else for(const node of record.addedNodes)if(node.nodeType===1||node.nodeType===3)translate(node)}observer.observe(document.body,{subtree:true,childList:true,characterData:true})});observer.observe(document.body,{subtree:true,childList:true,characterData:true})}
 })();
-</script><script type="module" src="./assets/experience.js"></script></body>
+</script><script type="module" src="./assets/experience.js?v=mobile-20261120-2"></script></body>
 </html>
 

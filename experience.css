@@ -51,3 +51,15 @@ header.header.cinematic-header.is-scrolled:before{opacity:.96}
 .scene-halo{filter:none;opacity:.45}
 
 #cube-stage canvas{touch-action:none;-webkit-touch-callout:none;user-select:none}
+.scene-halo{pointer-events:none}
+#cube-stage{z-index:1;touch-action:none}
+.scene-label,.scene-controls{z-index:2}
+.scene-controls{pointer-events:none}
+.scene-controls button{pointer-events:auto}
+@media(max-width:760px){
+  .hero{padding-top:28px}
+  .hero h1{font-size:clamp(46px,12.3vw,78px);line-height:.97;letter-spacing:-.045em;margin-bottom:28px}
+  .hero h1 em{display:block;margin-top:.13em}
+  .hero h1 br{display:none}
+  .eyebrow{margin-bottom:22px}
+}
