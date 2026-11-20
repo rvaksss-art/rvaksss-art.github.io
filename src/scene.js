@@ -1,63 +1,176 @@
 import * as THREE from 'three';
-import {gsap} from 'gsap';
-import {ScrollTrigger} from 'gsap/ScrollTrigger';
-export function createScene(host,reduce){
- const mobile=matchMedia('(max-width:760px)').matches;
- const renderer=new THREE.WebGLRenderer({alpha:true,antialias:!mobile,powerPreference:'low-power'});
- renderer.setPixelRatio(Math.min(devicePixelRatio,mobile?1.4:1.7));
- renderer.setClearColor(0x000000,0);renderer.outputColorSpace=THREE.SRGBColorSpace;
- host.append(renderer.domElement);
- const scene=new THREE.Scene();
- const camera=new THREE.PerspectiveCamera(33,1,.1,60);camera.position.set(0,0,9.6);
- const system=new THREE.Group();scene.add(system);
- const ambient=new THREE.AmbientLight(0xb4d5c6,2.4);scene.add(ambient);
- const key=new THREE.DirectionalLight(0xdbffe0,4);key.position.set(3,5,4);scene.add(key);
- const warm=new THREE.PointLight(0xffd6a1,35,20);warm.position.set(-3,2,3);scene.add(warm);
- const rim=new THREE.DirectionalLight(0x60adbd,3);rim.position.set(-4,-2,1);scene.add(rim);
- const geometry=new THREE.BoxGeometry(1.38,1.38,1.38);
- const edges=new THREE.EdgesGeometry(geometry);
- const cubes=[];const materials=[];
- const bases=[new THREE.Vector3(.22,1.32,-.12),new THREE.Vector3(-.66,0,.35),new THREE.Vector3(.36,-1.31,0)];
- for(let i=0;i<3;i++){
-  const group=new THREE.Group();group.position.copy(bases[i]);group.rotation.set(.28+i*.07,.55+i*.2,.08);system.add(group);
-  const shell=new THREE.MeshPhysicalMaterial({color:i===0?0xb2c3a0:0x72b59a,metalness:.4,roughness:.23,transparent:true,opacity:.13,depthWrite:false,side:THREE.DoubleSide});
-  group.add(new THREE.Mesh(geometry,shell));materials.push(shell);
-  const line=new THREE.LineSegments(edges,new THREE.LineBasicMaterial({color:i===0?0xdacda6:0xa7e4c0,transparent:true,opacity:.72}));group.add(line);materials.push(line.material);
-  const core=new THREE.Mesh(new THREE.BoxGeometry(.57,.57,.57),new THREE.MeshStandardMaterial({color:i===0?0x9b996c:0x397e60,metalness:.65,roughness:.25,emissive:0x173c27,emissiveIntensity:.2}));group.add(core);
-  const inner=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.68,.68,.68)),new THREE.LineBasicMaterial({color:0xd9edc5,transparent:true,opacity:.55}));group.add(inner);
-  // Corner joints and fine structural rails make the cubes legible in depth.
-  const jointGeometry=new THREE.SphereGeometry(.022,6,4);const jointMaterial=new THREE.MeshBasicMaterial({color:0xe6f1cd});
-  for(const x of [-.69,.69])for(const y of [-.69,.69])for(const z of [-.69,.69]){const joint=new THREE.Mesh(jointGeometry,jointMaterial);joint.position.set(x,y,z);group.add(joint);}
-  for(let a=0;a<3;a++){const rail=new THREE.Mesh(new THREE.BoxGeometry(1.35,.014,.014),new THREE.MeshBasicMaterial({color:0xa0d1a5,transparent:true,opacity:.25}));if(a===1)rail.rotation.z=Math.PI/2;if(a===2)rail.rotation.y=Math.PI/2;group.add(rail);}
-  cubes.push({group,core,inner});
- }
- const orbitGeometry=new THREE.BufferGeometry().setFromPoints(Array.from({length:161},(_,i)=>{const a=i/160*Math.PI*2;return new THREE.Vector3(Math.cos(a)*2.6,Math.sin(a)*2.6,0);}));
- const orbit=new THREE.LineLoop(orbitGeometry,new THREE.LineBasicMaterial({color:0x86b89a,transparent:true,opacity:.17}));orbit.rotation.set(1.15,.3,-.3);system.add(orbit);
- let light=document.documentElement.dataset.theme==='light';
- function theme(){light=document.documentElement.dataset.theme==='light';cubes.forEach(({group,core},i)=>{group.children[1].material.color.set(light?(i===0?0x806342:0x376d52):(i===0?0xdacda6:0xa7e4c0));core.material.color.set(light?0x80a58b:(i===0?0x9b996c:0x397e60));});draw();}
- const pointer={x:0,y:0};const state={spread:0,scroll:0};let active=true,paused=reduce.matches,id=0,last=0,time=0,drag=false,startX=0,dragAngle=0;
- function draw(){renderer.render(scene,camera);}
- function resize(){const {width,height}=host.getBoundingClientRect();if(!width||!height)return;renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();draw();}
- new ResizeObserver(resize).observe(host);resize();
- function render(now){id=0;if(!active||document.hidden||paused)return;const dt=Math.min((now-last)/1000,.05);last=now;time+=dt;
-  system.rotation.y+=(pointer.x*.18+dragAngle+state.scroll*.3-system.rotation.y)*.035;system.rotation.x+=(pointer.y*.12-system.rotation.x)*.035;
-  cubes.forEach(({group,core,inner},i)=>{group.rotation.y=.55+i*.2+time*(i%2?-.09:.075);group.rotation.z=.08+Math.sin(time*.3+i)*.055;group.position.copy(bases[i]).multiplyScalar(1+state.spread*.28+state.scroll*.10);group.position.y+=Math.sin(time*.7+i*1.7)*.08;core.rotation.y=time*.18;inner.rotation.y=-time*.12;});orbit.rotation.z=time*.025;draw();id=requestAnimationFrame(render);
- }
- function start(){if(!id&&!paused&&active&&!document.hidden){last=performance.now();id=requestAnimationFrame(render);}}
- function stop(){cancelAnimationFrame(id);id=0;}
- new IntersectionObserver(entries=>{active=entries[0].isIntersecting;if(active)start();else stop();},{threshold:0}).observe(host);
- document.addEventListener('visibilitychange',()=>document.hidden?stop():start());
- const canvas=renderer.domElement;
- canvas.addEventListener('pointermove',e=>{if(e.pointerType==='touch'||reduce.matches||paused)return;const r=host.getBoundingClientRect();pointer.x=(e.clientX-r.left)/r.width*2-1;pointer.y=(e.clientY-r.top)/r.height*2-1;if(drag)dragAngle+=(e.clientX-startX)*.006;startX=e.clientX;});
- canvas.addEventListener('pointerleave',()=>{pointer.x=pointer.y=0;});
- canvas.addEventListener('pointerdown',e=>{if(e.pointerType==='touch')return;drag=true;startX=e.clientX;canvas.setPointerCapture(e.pointerId);});
- canvas.addEventListener('pointerup',()=>{drag=false;});canvas.addEventListener('pointercancel',()=>{drag=false;});
- const explore=document.querySelector('#assemble');
- explore.addEventListener('click',()=>{const expanded=explore.getAttribute('aria-pressed')!=='true';explore.setAttribute('aria-pressed',String(expanded));gsap.to(state,{spread:expanded?1:0,duration:reduce.matches||paused?0:1.25,ease:'power3.inOut',onUpdate:()=>{if(paused){cubes.forEach(({group},i)=>group.position.copy(bases[i]).multiplyScalar(1+state.spread*.28));draw();}}});});
- const media=gsap.matchMedia();media.add('(prefers-reduced-motion: no-preference)',()=>{gsap.to(state,{scroll:1,ease:'none',scrollTrigger:{trigger:'.hero',start:'top top',end:'bottom top',scrub:1}});});
- const themeObserver=new MutationObserver(theme);themeObserver.observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});theme();
- canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();stop();host.parentElement.classList.remove('webgl-ready');explore.hidden=true;});
- canvas.addEventListener('webglcontextrestored',()=>{host.parentElement.classList.add('webgl-ready');explore.hidden=false;resize();start();});
- host.parentElement.classList.add('webgl-ready');start();
- return {setPaused(value){paused=value;if(paused){stop();gsap.killTweensOf(state,'spread');draw();}else start();}};
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+
+const openingDuration = 4;
+const poses = [
+  new THREE.Vector3(.58, 1.32, -.12),
+  new THREE.Vector3(-.82, .04, .25),
+  new THREE.Vector3(.54, -1.28, .04),
+];
+
+function metal(color, roughness = .3) {
+  return new THREE.MeshStandardMaterial({color, roughness, metalness: .74});
+}
+
+function mesh(parent, geometry, material, x = 0, y = 0, z = 0) {
+  const part = new THREE.Mesh(geometry, material);
+  part.position.set(x, y, z);
+  parent.add(part);
+  return part;
+}
+
+// Reflections of three studio strip lights, shared by glass and polished metal.
+function studioTexture() {
+  const width = 128, height = 64;
+  const data = new Float32Array(width * height * 4);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const u = x / width, v = y / height;
+      const strip = (a, b, w, h) => Math.exp(-(((u-a)/w)**2 + ((v-b)/h)**2));
+      const cool = 7 * strip(.17,.48,.024,.26) + 3 * strip(.73,.76,.16,.07);
+      const warm = 6 * strip(.55,.46,.055,.23);
+      data.set([.10+cool*.8+warm,.15+cool+warm*.75,.14+cool*.93+warm*.47,1], 4*(y*width+x));
+    }
+  }
+  const map = new THREE.DataTexture(data,width,height,THREE.RGBAFormat,THREE.FloatType);
+  map.mapping = THREE.EquirectangularReflectionMapping;
+  map.needsUpdate = true;
+  return map;
+}
+
+function buildMechanism(index, group) {
+  const alloy = metal(index === 0 ? 0xcba678 : 0x94c6b1);
+  const graphite = metal(0x354f49);
+  const accent = new THREE.MeshStandardMaterial({
+    color:index === 0 ? 0xfac186 : 0xb2f4d2,
+    emissive:index === 0 ? 0xf69a51 : 0x75cba4, emissiveIntensity:.38, metalness:.48,roughness:.22
+  });
+  const ring = (radius, tube, material, z = 0) =>
+    mesh(group,new THREE.TorusGeometry(radius,tube,10,64),material,0,0,z);
+  if (index === 0) {
+    // A calibrated dial with an eccentric indicator and a recessed centre.
+    const dial = mesh(group,new THREE.CylinderGeometry(.44,.42,.10,64),graphite);
+    dial.rotation.x = Math.PI/2;
+    ring(.424,.026,alloy,.054);
+    ring(.27,.015,accent,.067);
+    const ticks = new THREE.InstancedMesh(new THREE.BoxGeometry(.014,.044,.012),alloy,24);
+    const tick = new THREE.Object3D();
+    for(let i=0;i<24;i++) {
+      const angle = i*Math.PI/12;
+      tick.position.set(.347*Math.cos(angle),.347*Math.sin(angle),.058);
+      tick.rotation.z=angle-Math.PI/2;
+      tick.updateMatrix();
+      ticks.setMatrixAt(i,tick.matrix);
+    }
+    group.add(ticks);
+    mesh(group,new THREE.SphereGeometry(.098,24,16),alloy,0,0,.065).scale.z=.55;
+    mesh(group,new THREE.SphereGeometry(.037,16,12),accent,.27,0,.077);
+    return (t, spread) => {group.rotation.z = .35+t*.13; group.rotation.x=.15+spread*.18;};
+  }
+  if (index === 1) {
+    // The processor opens along a single axis, exposing the luminous substrate.
+    const layers=[];
+    for(let i=0;i<5;i++) {
+      const side=[.73,.61,.69,.58,.5][i];
+      layers.push(mesh(group,new RoundedBoxGeometry(side,.082,side,2,.035),[graphite,alloy,graphite,accent,alloy][i]));
+    }
+    return (t, spread) => {
+      layers.forEach((layer,i)=>{layer.position.y=(i-2)*(.09+.07*spread);});
+      group.rotation.y=.25+t*.10;
+    };
+  }
+  // Three apertures telescope into a finished lens assembly.
+  const frames=[];
+  for(let i=0;i<3;i++) {
+    const frame=new THREE.Shape();
+    const contour=(p,r,b)=>{
+      p.moveTo(-r+b,-r);p.lineTo(r-b,-r);p.quadraticCurveTo(r,-r,r,-r+b);
+      p.lineTo(r,r-b);p.quadraticCurveTo(r,r,r-b,r);p.lineTo(-r+b,r);
+      p.quadraticCurveTo(-r,r,-r,r-b);p.lineTo(-r,-r+b);p.quadraticCurveTo(-r,-r,-r+b,-r);
+    };
+    const r=.38-i*.054;
+    contour(frame,r,.07);
+    const hole=new THREE.Path();contour(hole,r-.05,.045);frame.holes.push(hole);
+    frames.push(mesh(group,new THREE.ExtrudeGeometry(frame,{depth:.047,bevelSize:.009,bevelThickness:.009,bevelSegments:2}),[alloy,graphite,accent][i]));
+  }
+  mesh(group,new THREE.OctahedronGeometry(.14),alloy);
+  return (t,spread)=>{frames.forEach((f,i)=>{f.position.z=(i-1)*(.067+.11*spread);});group.rotation.y=-.38+Math.sin(t*.32)*.20;group.rotation.z=-.12;};
+}
+
+export function createScene(host, reduce) {
+  const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:'low-power'});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,matchMedia('(max-width:760px)').matches?1.4:1.7));
+  renderer.setClearColor(0,0);
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  host.append(renderer.domElement);
+  const scene=new THREE.Scene();
+  scene.environment=studioTexture();
+  const camera=new THREE.PerspectiveCamera(33,1,.1,40);
+  camera.position.z=9.85;
+  const system=new THREE.Group();scene.add(system);
+  scene.add(new THREE.HemisphereLight(0xf4ffee,0x456454,1.6));
+  const key=new THREE.DirectionalLight(0xffefcf,2.6);key.position.set(-2,4,3);scene.add(key);
+
+  const shell=new RoundedBoxGeometry(1.34,1.34,1.34,3,.065);
+  const edges=new THREE.EdgesGeometry(new THREE.BoxGeometry(1.30,1.30,1.30));
+  const modules=poses.map((pose,i)=>{
+    const cube=new THREE.Group();system.add(cube);
+    const glass=new THREE.MeshPhysicalMaterial({color:i===0?0xe7c99b:0xa4d7bd,transparent:true,opacity:.12,
+      roughness:.12,metalness:.48,clearcoat:1,depthWrite:false});
+    mesh(cube,shell,glass);
+    const outline=new THREE.LineBasicMaterial({transparent:true,opacity:.49});
+    cube.add(new THREE.LineSegments(edges,outline));
+    const mechanism=new THREE.Group();cube.add(mechanism);
+    return {cube,pose,outline,update:buildMechanism(i,mechanism)};
+  });
+
+  let elapsed=0, last=0, frame=0, visible=false, paused=reduce.matches, lost=false;
+  let targetX=0,targetY=0,dragging=false,lastX=0,yaw=0;
+  const canvas=renderer.domElement;
+  function draw(){if(!lost)renderer.render(scene,camera);}
+  function compose(){
+    const phase=reduce.matches?1:Math.min(elapsed/openingDuration,1);
+    const spread=phase*phase*(3-2*phase);
+    modules.forEach(({cube,pose,update},i)=>{
+      cube.position.set(pose.x*(.29+.71*spread),pose.y*(.50+.5*spread),pose.z);
+      cube.scale.setScalar(.76+.24*spread);
+      cube.rotation.set(.29+.12*Math.sin(elapsed*.24+i),.48+i*.12+elapsed*(i===1?-.042:.046),.035*(i-1));
+      update(elapsed,spread);
+    });
+  }
+  function tick(now){
+    frame=0;
+    const delta=(now-last)/1000;last=now;elapsed+=delta;
+    const response=1-Math.exp(-5*delta);
+    const scroll=Math.min(scrollY/Math.max(innerHeight,1),1);
+    system.rotation.y+=(yaw+targetX*.15+scroll*.12-system.rotation.y)*response;
+    system.rotation.x+=(targetY*.10-system.rotation.x)*response;
+    compose();draw();frame=requestAnimationFrame(tick);
+  }
+  function schedule(){
+    cancelAnimationFrame(frame);frame=0;
+    if(visible&&!document.hidden&&!paused&&!lost){last=performance.now();frame=requestAnimationFrame(tick);}
+  }
+  function resize(){const {width,height}=host.getBoundingClientRect();if(!width||!height)return;
+    renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();draw();}
+  function theme(){const light=document.documentElement.dataset.theme==='light';
+    modules.forEach(({outline},i)=>outline.color.set(light?(i===0?0x735531:0x315f49):(i===0?0xf5d19e:0xc7f2da)));draw();}
+  compose();resize();theme();
+  new ResizeObserver(resize).observe(host);
+  new MutationObserver(theme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+  new IntersectionObserver(([entry])=>{visible=entry.isIntersecting;schedule();}).observe(host);
+  document.addEventListener('visibilitychange',schedule);
+  canvas.addEventListener('pointermove',e=>{
+    if(paused||e.pointerType==='touch')return;
+    const bounds=canvas.getBoundingClientRect();
+    targetX=(e.clientX-bounds.left)/bounds.width*2-1;targetY=(e.clientY-bounds.top)/bounds.height*2-1;
+    if(dragging)yaw+=(e.clientX-lastX)*.005;lastX=e.clientX;
+  });
+  canvas.addEventListener('pointerdown',e=>{if(!paused&&e.pointerType!=='touch'){dragging=true;lastX=e.clientX;canvas.setPointerCapture(e.pointerId);}});
+  canvas.addEventListener('lostpointercapture',()=>{dragging=false;});
+  canvas.addEventListener('pointerleave',()=>{targetX=targetY=0;});
+  canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();lost=true;schedule();host.parentElement.classList.remove('webgl-ready');});
+  canvas.addEventListener('webglcontextrestored',()=>{lost=false;resize();host.parentElement.classList.add('webgl-ready');schedule();});
+  host.parentElement.classList.add('webgl-ready');
+  return {setPaused(value){paused=value;if(reduce.matches){elapsed=openingDuration;compose();draw();}schedule();}};
 }
