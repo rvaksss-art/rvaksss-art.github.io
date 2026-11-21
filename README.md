@@ -17,8 +17,8 @@ GitHub Pages serves the root `index.html`; the compiled `assets/` are tracked, s
 
 ## Design and interaction
 
-- Three independent glass cubes (SYSTEM, BUSINESS, PRODUCT) float in a viewport layer throughout the page. Throw velocity, damping, spin from the grab offset, edge bounces and pair collisions use CSS pixels per second.
-- Only cube handles receive pointer events. Text repels free cubes; overlap fades them and releases pointer interception. Links and navigation take priority. Below the Hero cubes shrink and settle toward the margins.
+- Three independent glass cubes (SYSTEM, BUSINESS, PRODUCT) move within the Hero viewport. Throw velocity, damping, spin from the grab offset, edge bounces and pair collisions use CSS pixels per second.
+- Only cube handles receive pointer events. Text repels free cubes; overlapping text and links release pointer interception without fading. The Hero bounds stop throws and bouncing cubes, and the scene stays outside the projects section.
 - Mouse drag throws a cube. On touch, hold for 190 ms to grab; an immediate swipe over a handle scrolls the page. Elsewhere scrolling is native. Pointer cancellation, lost capture, blur and hidden tabs release a drag.
 - Keyboard: arrow keys move, Shift increases the step, Space spins, Escape resets. Pause stops autonomous motion; reduced-motion preference starts paused. An explicit Resume enables motion.
 - WebGL uses glass rim reflections and three restrained mechanisms. A CSS 3D renderer shares the interaction and physics if WebGL is unavailable or lost. The initial SVG remains until initialization completes.

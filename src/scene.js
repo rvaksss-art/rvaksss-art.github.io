@@ -132,7 +132,7 @@ export function createScene(host) {
   controls.append(help,pause); instrument.append(controls);
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');
   let paused=reduced.matches, lost=false, frame=0, last=0, elapsed=0, active=null, pointer=null;
-  let rectangles=[], links=[], dirty=true, width=innerWidth, height=innerHeight, headerBottom=76, home=[];
+  let rectangles=[], links=[], dirty=true, width=innerWidth, height=innerHeight, headerBottom=76, home=[], bounds={left:0,right:innerWidth,top:0,bottom:innerHeight}, lastScroll=scrollY, heroOnScreen=true;
   function labels(){
     const en=document.documentElement.lang==='en';
     help.textContent=en?'Drag & throw · touch: hold':'Потяни и отпусти · на телефоне: удерживай';
@@ -142,8 +142,14 @@ export function createScene(host) {
   }
   function measure(){
     const area=instrument.getBoundingClientRect();
+    const hero=document.querySelector('.hero').getBoundingClientRect();
     const header=document.querySelector('.header').getBoundingClientRect();
     headerBottom=Math.max(12,header.bottom+12);
+    const top=Math.max(hero.top,headerBottom), bottom=Math.min(hero.bottom,height);
+    heroOnScreen=bottom-top>120;
+    layer.hidden=!heroOnScreen;
+    layer.style.clipPath=`inset(${Math.max(0,hero.top)}px ${Math.max(0,width-hero.right)}px ${Math.max(0,height-hero.bottom)}px ${Math.max(0,hero.left)}px)`;
+    bounds={left:Math.max(0,hero.left),right:Math.min(width,hero.right),top,bottom};
     const small=width<761;
     home=small?[[.22,.32],[.72,.34],[.48,.73]]:[[.68,.23],[.28,.49],[.67,.76]];
     home=home.map(([x,y])=>({x:area.left+area.width*x,y:area.top+area.height*y}));
@@ -154,35 +160,32 @@ export function createScene(host) {
   }
   function reset(){measure();modules.forEach((b,i)=>{b.x=home[i].x;b.y=home[i].y;b.vx=b.vy=b.spin=0;b.angle=.48+i*.24;b.tilt=.3;});}
   function size(){
-    width=innerWidth;height=innerHeight;
+    width=innerWidth;height=innerHeight;lastScroll=scrollY;
     renderer.setSize(width,height,false);camera.right=width;camera.bottom=-height;camera.updateProjectionMatrix();
     dirty=true;reset();render(0);
   }
   function render(dt){
     if(dirty)measure();
-    const heroVisible=home[2].y>headerBottom+50;
+    if(!heroOnScreen)return;
     const mobile=width<761;
     modules.forEach((b,i)=>{
-      const side=heroVisible?(mobile?72:Math.min(133,width*.106)):(mobile?42:64);
+      const side=mobile?72:Math.min(133,width*.106);
       b.r=side*.72;
       const resting=paused;
       if(b!==active&&!resting){
         // Gentle current; no fixed orbit. Return toward the margins after a throw.
         b.vx+=Math.sin(elapsed*.43+i*2.1)*9*dt;
         b.vy+=Math.cos(elapsed*.36+i*1.7)*8*dt;
-        const targetX=heroVisible?home[i].x:(i===1?b.r+10:width-b.r-10);
-        const targetY=heroVisible?home[i].y:headerBottom+(height-headerBottom)*(.2+i*.26);
+        const targetX=home[i].x;
+        const targetY=home[i].y;
         b.vx+=(targetX-b.x)*.22*dt; b.vy+=(targetY-b.y)*.16*dt;
         for(const rect of rectangles)repel(b,rect,dt);
-        advance(b,dt,{left:5,right:width-5,top:headerBottom,bottom:height-8});
+        advance(b,dt,bounds);
         b.angle+=((i===1?-.07:.065)+b.spin)*dt;
         b.spin*=Math.exp(-1.15*dt);
         b.tilt+=(.32+Math.sin(elapsed*.3+i)*.12-b.tilt)*dt;
       }
       const over=rectangles.some(r=>b.x+b.r>r.left&&b.x-b.r<r.right&&b.y+b.r>r.top&&b.y-b.r<r.bottom);
-      const opacity=over&&b!==active?.07:1;
-      b.alpha+=(opacity-b.alpha)*Math.min(1,dt*14||1);
-      b.button.style.opacity=String(b.alpha);
       const coversLink=links.some(r=>b.x+side/2>r.left&&b.x-side/2<r.right&&b.y+side/2>r.top&&b.y-side/2<r.bottom);
       b.button.style.pointerEvents=(over||coversLink)&&b!==active?'none':'auto';
       b.button.style.setProperty('--cube-side',`${side}px`);
@@ -191,9 +194,6 @@ export function createScene(host) {
       b.button.style.transform=`translate3d(${b.x-side/2}px,${b.y-side/2}px,0)`;
       b.cube.position.set(b.x,-b.y,0); b.cube.scale.setScalar(side/1.34);
       b.cube.rotation.set(b.tilt,b.angle,Math.sin(b.angle*.4)*.12);
-      b.glass.uniforms.visibility.value=b.alpha;
-      b.outline.opacity=.46*b.alpha;
-      b.cube.visible=b.alpha>.12;
       b.update(elapsed,1);
     });
     if(!paused)for(let i=0;i<3;i++)for(let j=i+1;j<3;j++)if(modules[i]!==active&&modules[j]!==active)collide(modules[i],modules[j]);
@@ -232,8 +232,8 @@ export function createScene(host) {
         if(Math.hypot(dx,dy)>3){pointer.scrolling=true;clearTimeout(pointer.timer);}
         if(pointer.scrolling)window.scrollBy(0,-dy);
       }else{
-        b.x=clamp(event.clientX-pointer.ox,b.r+5,width-b.r-5);
-        b.y=clamp(event.clientY-pointer.oy,headerBottom+b.r,height-b.r-8);
+        b.x=clamp(event.clientX-pointer.ox,bounds.left+b.r,bounds.right-b.r);
+        b.y=clamp(event.clientY-pointer.oy,bounds.top+b.r,bounds.bottom-b.r);
         b.vx=clamp(dx/dt,-1600,1600);b.vy=clamp(dy/dt,-1600,1600);
         b.spin=clamp((pointer.ox*dy-pointer.oy*dx)/Math.max(b.r*b.r,1)/dt,-7,7);
         b.angle+=dx*.009;b.tilt+=dy*.006;
@@ -251,7 +251,7 @@ export function createScene(host) {
       const step=event.shiftKey?48:18;
       if(event.key==='ArrowLeft')b.x-=step;if(event.key==='ArrowRight')b.x+=step;
       if(event.key==='ArrowUp')b.y-=step;if(event.key==='ArrowDown')b.y+=step;
-      advance(b,0,{left:5,right:width-5,top:headerBottom,bottom:height-8});
+      advance(b,0,bounds);
       render(0);schedule();
     });
   });
@@ -260,7 +260,12 @@ export function createScene(host) {
   document.addEventListener('visibilitychange',()=>{if(document.hidden&&pointer)end({pointerId:pointer.id,type:'pointercancel'});schedule();});
   window.addEventListener('blur',()=>{if(pointer)end({pointerId:pointer.id,type:'pointercancel'});});
   window.addEventListener('resize',size);
-  window.addEventListener('scroll',()=>{dirty=true;if(paused){reset();render(0);}}, {passive:true});
+  window.addEventListener('scroll',()=>{
+    const shift=scrollY-lastScroll;lastScroll=scrollY;
+    modules.forEach(b=>{b.y-=shift;});
+    dirty=true;
+    if(paused)render(0);
+  }, {passive:true});
   new ResizeObserver(()=>{dirty=true;schedule();}).observe(document.querySelector('.hero'));
   function theme(){
     const light=document.documentElement.dataset.theme==='light';
