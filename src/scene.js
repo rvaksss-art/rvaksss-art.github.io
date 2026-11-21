@@ -1,13 +1,8 @@
-import { engravedFace, polishedGlass } from './finishes.js';
+import { polishedGlass } from './finishes.js';
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 
-const openingDuration = 4;
-const poses = [
-  new THREE.Vector3(.58, 1.32, -.12),
-  new THREE.Vector3(-.82, .04, .25),
-  new THREE.Vector3(.54, -1.28, .04),
-];
+import { advance, repel, collide, clamp } from './physics.js';
 
 function metal(color, roughness = .3) {
   return new THREE.MeshStandardMaterial({color, roughness, metalness: .74});
@@ -64,11 +59,6 @@ function buildMechanism(index, group) {
       ticks.setMatrixAt(i,tick.matrix);
     }
     group.add(ticks);
-    const inscription = engravedFace(group,'dial',.56);
-    inscription.position.z = .052;
-    const reverse = engravedFace(group,'dial',.71);
-    reverse.rotation.y = Math.PI;
-    reverse.position.z = -.052;
     mesh(group,new THREE.SphereGeometry(.098,24,16),alloy,0,0,.065).scale.z=.55;
     mesh(group,new THREE.SphereGeometry(.037,16,12),accent,.27,0,.077);
     return (t, spread) => {group.rotation.z = .35+t*.13; group.rotation.x=.15+spread*.18;};
@@ -80,9 +70,6 @@ function buildMechanism(index, group) {
       const side=[.73,.61,.69,.58,.5][i];
       layers.push(mesh(group,new RoundedBoxGeometry(side,.082,side,2,.035),[graphite,alloy,graphite,accent,alloy][i]));
     }
-    const seal = engravedFace(layers[4],'seal',.415);
-    seal.rotation.x = -Math.PI/2;
-    seal.position.y = .042;
     return (t, spread) => {
       layers.forEach((layer,i)=>{layer.position.y=(i-2)*(.09+.07*spread);});
       group.rotation.y=.25+t*.10;
@@ -102,111 +89,186 @@ function buildMechanism(index, group) {
     const hole=new THREE.Path();contour(hole,r-.05,.045);frame.holes.push(hole);
     frames.push(mesh(group,new THREE.ExtrudeGeometry(frame,{depth:.047,bevelSize:.009,bevelThickness:.009,bevelSegments:2}),[alloy,graphite,accent][i]));
   }
-  for(let side=0;side<4;side++){
-    const angle=side*Math.PI/2;
-    const band=engravedFace(frames[0],'border',.56,.039);
-    band.position.set(-Math.sin(angle)*.357,Math.cos(angle)*.357,.057);
-    band.rotation.z=angle;
-  }
   mesh(group,new THREE.OctahedronGeometry(.14),alloy);
   return (t,spread)=>{frames.forEach((f,i)=>{f.position.z=(i-1)*(.067+.11*spread);});group.rotation.y=-.38+Math.sin(t*.32)*.20;group.rotation.z=-.12;};
 }
 
 export function createScene(host) {
-  const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:'low-power'});
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 3));
+  const instrument = host.parentElement;
+  let renderer, cssOnly=false;
+  try { renderer=new THREE.WebGLRenderer({alpha:true, antialias:true, powerPreference:'low-power'}); }
+  catch { cssOnly=true; renderer={domElement:document.createElement('canvas'),setPixelRatio(){},setClearColor(){},setSize(){},render(){}}; }
+  renderer.setPixelRatio(Math.min(devicePixelRatio, innerWidth < 761 ? 1.4 : 1.7));
   renderer.setClearColor(0,0);
-  renderer.toneMapping=THREE.ACESFilmicToneMapping;
-  host.append(renderer.domElement);
-  const scene=new THREE.Scene();
-  scene.environment=studioTexture();
-  const camera=new THREE.PerspectiveCamera(33,1,.1,40);
-  camera.position.z=9.85;
-  const system=new THREE.Group();scene.add(system);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  const canvas = renderer.domElement;
+  const layer = document.createElement('div'); layer.className = 'floating-cubes';
+  layer.classList.toggle('css-glass',cssOnly);
+  layer.append(canvas); document.body.append(layer);
+  canvas.setAttribute('aria-hidden','true');
+  const scene = new THREE.Scene(); scene.environment = studioTexture();
+  const camera = new THREE.OrthographicCamera(0,innerWidth,0,-innerHeight,.1,3000);
+  camera.position.z = 1500;
   scene.add(new THREE.HemisphereLight(0xf4ffee,0x456454,1.6));
-  const key=new THREE.DirectionalLight(0xffefcf,2.6);key.position.set(-2,4,3);scene.add(key);
-
-  const shell=new RoundedBoxGeometry(1.34,1.34,1.34,3,.065);
-  const edges=new THREE.EdgesGeometry(new THREE.BoxGeometry(1.30,1.30,1.30));
-  const modules=poses.map((pose,i)=>{
-    const cube=new THREE.Group();system.add(cube);
+  const key = new THREE.DirectionalLight(0xffefcf,2.6); key.position.set(-200,400,800); scene.add(key);
+  const shell = new RoundedBoxGeometry(1.34,1.34,1.34,3,.065);
+  const edges = new THREE.EdgesGeometry(new THREE.BoxGeometry(1.30,1.30,1.30));
+  const names = ['BUSINESS','SYSTEM','PRODUCT'];
+  const modules = names.map((name,i)=>{
+    const cube=new THREE.Group(); scene.add(cube);
     const glass=polishedGlass(i===0?0xdfc299:0xa4d7bd);
     mesh(cube,shell,glass).renderOrder=2;
-    const outline=new THREE.LineBasicMaterial({transparent:true,opacity:.49});
+    const outline=new THREE.LineBasicMaterial({transparent:true,opacity:.46});
     cube.add(new THREE.LineSegments(edges,outline));
-    const mechanism=new THREE.Group();cube.add(mechanism);
-    return {cube,pose,outline,update:buildMechanism(i,mechanism)};
+    const mechanism=new THREE.Group(); cube.add(mechanism);
+    const button=document.createElement('button'); button.className='cube-handle';
+    button.innerHTML=`<i class="glass-solid" aria-hidden="true"><i class="glass-core core-${i}"></i>${Array.from({length:6},()=>'<i class="glass-face"></i>').join('')}</i><span>${name}</span>`; button.type='button';
+    button.setAttribute('aria-describedby','cube-help'); layer.append(button);
+    return {cube,glass,outline,button,update:buildMechanism(i,mechanism),x:0,y:0,vx:0,vy:0,r:60,spin:0,angle:i*.4,tilt:.3,alpha:1};
   });
-
-  let elapsed=0, last=0, frame=0, visible=false, lost=false;
-  let targetX=0,targetY=0,lastX=0,lastY=0,yaw=0,pitch=0,displayPitch=0;
-  const canvas=renderer.domElement;
-  function draw(){if(!lost)renderer.render(scene,camera);}
-  function compose(){
-    const phase=Math.min(elapsed/openingDuration,1);
-    const spread=phase*phase*(3-2*phase);
-    modules.forEach(({cube,pose,update},i)=>{
-      cube.position.set(pose.x*(.29+.71*spread),pose.y*(.50+.5*spread),pose.z);
-      cube.scale.setScalar(.76+.24*spread);
-      cube.rotation.set(displayPitch+.29+.12*Math.sin(elapsed*.24+i),.48+i*.12+elapsed*(i===1?-.042:.046),.035*(i-1));
-      update(elapsed,spread);
+  const help=document.createElement('p'); help.id='cube-help'; help.className='cube-help';
+  const controls=document.createElement('div'); controls.className='cube-controls';
+  const pause=document.createElement('button'); pause.type='button'; pause.setAttribute('aria-pressed','false');
+  controls.append(help,pause); instrument.append(controls);
+  const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+  let paused=reduced.matches, lost=false, frame=0, last=0, elapsed=0, active=null, pointer=null;
+  let rectangles=[], links=[], dirty=true, width=innerWidth, height=innerHeight, headerBottom=76, home=[];
+  function labels(){
+    const en=document.documentElement.lang==='en';
+    help.textContent=en?'Drag & throw · touch: hold':'Потяни и отпусти · на телефоне: удерживай';
+    pause.textContent=paused?(en?'Resume motion':'Продолжить'):(en?'Pause motion':'Пауза');
+    pause.setAttribute('aria-pressed',String(paused));
+    modules.forEach((b,i)=>b.button.setAttribute('aria-label',`${names[i]}. ${en?'Drag to throw. Arrow keys to move, Space to spin, Escape to reset.':'Перетащите и бросьте. Стрелки — перемещение, пробел — вращение, Escape — вернуть.'}`));
+  }
+  function measure(){
+    const area=instrument.getBoundingClientRect();
+    const header=document.querySelector('.header').getBoundingClientRect();
+    headerBottom=Math.max(12,header.bottom+12);
+    const small=width<761;
+    home=small?[[.22,.32],[.72,.34],[.48,.73]]:[[.68,.23],[.28,.49],[.67,.76]];
+    home=home.map(([x,y])=>({x:area.left+area.width*x,y:area.top+area.height*y}));
+    rectangles=[...document.querySelectorAll('.hero h1,.eyebrow,.intro,.hero-scroll,.selection-heading,.portal h3,.portal p,.card-top,.card-bottom,.project-options,.footer,.cube-controls')]
+      .map(el=>el.getBoundingClientRect()).filter(r=>r.bottom>0&&r.top<height);
+    links=[...document.querySelectorAll('.wrap a,.wrap button')].map(el=>el.getBoundingClientRect()).filter(r=>r.bottom>0&&r.top<height);
+    dirty=false;
+  }
+  function reset(){measure();modules.forEach((b,i)=>{b.x=home[i].x;b.y=home[i].y;b.vx=b.vy=b.spin=0;b.angle=.48+i*.24;b.tilt=.3;});}
+  function size(){
+    width=innerWidth;height=innerHeight;
+    renderer.setSize(width,height,false);camera.right=width;camera.bottom=-height;camera.updateProjectionMatrix();
+    dirty=true;reset();render(0);
+  }
+  function render(dt){
+    if(dirty)measure();
+    const heroVisible=home[2].y>headerBottom+50;
+    const mobile=width<761;
+    modules.forEach((b,i)=>{
+      const side=heroVisible?(mobile?72:Math.min(133,width*.106)):(mobile?42:64);
+      b.r=side*.72;
+      const resting=paused;
+      if(b!==active&&!resting){
+        // Gentle current; no fixed orbit. Return toward the margins after a throw.
+        b.vx+=Math.sin(elapsed*.43+i*2.1)*9*dt;
+        b.vy+=Math.cos(elapsed*.36+i*1.7)*8*dt;
+        const targetX=heroVisible?home[i].x:(i===1?b.r+10:width-b.r-10);
+        const targetY=heroVisible?home[i].y:headerBottom+(height-headerBottom)*(.2+i*.26);
+        b.vx+=(targetX-b.x)*.22*dt; b.vy+=(targetY-b.y)*.16*dt;
+        for(const rect of rectangles)repel(b,rect,dt);
+        advance(b,dt,{left:5,right:width-5,top:headerBottom,bottom:height-8});
+        b.angle+=((i===1?-.07:.065)+b.spin)*dt;
+        b.spin*=Math.exp(-1.15*dt);
+        b.tilt+=(.32+Math.sin(elapsed*.3+i)*.12-b.tilt)*dt;
+      }
+      const over=rectangles.some(r=>b.x+b.r>r.left&&b.x-b.r<r.right&&b.y+b.r>r.top&&b.y-b.r<r.bottom);
+      const opacity=over&&b!==active?.07:1;
+      b.alpha+=(opacity-b.alpha)*Math.min(1,dt*14||1);
+      b.button.style.opacity=String(b.alpha);
+      const coversLink=links.some(r=>b.x+side/2>r.left&&b.x-side/2<r.right&&b.y+side/2>r.top&&b.y-side/2<r.bottom);
+      b.button.style.pointerEvents=(over||coversLink)&&b!==active?'none':'auto';
+      b.button.style.setProperty('--cube-side',`${side}px`);
+      b.button.querySelector('.glass-solid').style.transform=`rotateX(${b.tilt}rad) rotateY(${b.angle}rad) rotateZ(${Math.sin(b.angle*.4)*.12}rad)`;
+      b.button.style.width=b.button.style.height=`${Math.max(44,side)}px`;
+      b.button.style.transform=`translate3d(${b.x-side/2}px,${b.y-side/2}px,0)`;
+      b.cube.position.set(b.x,-b.y,0); b.cube.scale.setScalar(side/1.34);
+      b.cube.rotation.set(b.tilt,b.angle,Math.sin(b.angle*.4)*.12);
+      b.glass.uniforms.visibility.value=b.alpha;
+      b.outline.opacity=.46*b.alpha;
+      b.cube.visible=b.alpha>.12;
+      b.update(elapsed,1);
     });
+    if(!paused)for(let i=0;i<3;i++)for(let j=i+1;j<3;j++)if(modules[i]!==active&&modules[j]!==active)collide(modules[i],modules[j]);
+    if(!lost&&!cssOnly)renderer.render(scene,camera);
   }
   function tick(now){
-    frame=0;
-    const delta=(now-last)/1000;last=now;elapsed+=delta;
-    const response=1-Math.exp(-5*delta);
-    displayPitch+=(pitch-displayPitch)*response;
-    const scroll=Math.min(scrollY/Math.max(innerHeight,1),1);
-    system.rotation.y+=(yaw+targetX*.15+scroll*.12-system.rotation.y)*response;
-    system.rotation.x+=(targetY*.10-system.rotation.x)*response;
-    compose();draw();frame=requestAnimationFrame(tick);
+    frame=0; const dt=Math.min((now-last)/1000,.033);last=now;
+    if(!paused)elapsed+=dt;
+    render(dt);
+    if(!paused&&!document.hidden&&!lost)frame=requestAnimationFrame(tick);
   }
-  function schedule(){
-    cancelAnimationFrame(frame);frame=0;
-    if(visible&&!document.hidden&&!lost){last=performance.now();frame=requestAnimationFrame(tick);}
+  function schedule(){cancelAnimationFrame(frame);frame=0;if(document.hidden||lost)return;last=performance.now();frame=requestAnimationFrame(tick);}
+  function end(event){
+    if(!pointer||event.pointerId!==pointer.id)return;
+    clearTimeout(pointer.timer);
+    if(active&&(event.type!=='pointerup'||performance.now()-pointer.time>110||paused))active.vx=active.vy=active.spin=0;
+    if(active)active.button.classList.remove('is-grabbed');
+    const button=pointer.b.button,id=pointer.id;active=null;pointer=null;
+    if(button.hasPointerCapture(id))button.releasePointerCapture(id);
+    schedule();
   }
-  function resize(){const {width,height}=host.getBoundingClientRect();if(!width||!height)return;
-    renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();draw();}
-  function theme(){const light=document.documentElement.dataset.theme==='light';
-    modules.forEach(({outline},i)=>outline.color.set(light?(i===0?0x735531:0x315f49):(i===0?0xf5d19e:0xc7f2da)));draw();}
-  compose();resize();theme();
-  new ResizeObserver(resize).observe(host);
-  new MutationObserver(theme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
-  new IntersectionObserver(([entry])=>{visible=entry.isIntersecting;schedule();}).observe(host);
-  document.addEventListener('visibilitychange',schedule);
-  // Pointer capture keeps the gesture active even when the finger leaves a cube.
-  let activePointer = null;
-  canvas.addEventListener('pointerdown', event => {
-    if (!event.isPrimary || event.button !== 0) return;
-    activePointer = event.pointerId;
-    lastX = event.clientX;
-    lastY = event.clientY;
-    canvas.setPointerCapture(event.pointerId);
-  });
-  canvas.addEventListener('pointermove', event => {
-    if (event.pointerId === activePointer) {
+  modules.forEach(b=>{
+    b.button.addEventListener('pointerdown',event=>{
+      if(pointer||!event.isPrimary||event.button!==0)return;
       event.preventDefault();
-      yaw += (event.clientX - lastX) * .008;
-      pitch += (event.clientY - lastY) * .009;
-      lastX = event.clientX;
-      lastY = event.clientY;
-      return;
-    }
-    if (event.pointerType === 'touch') return;
-    const bounds = canvas.getBoundingClientRect();
-    targetX = (event.clientX - bounds.left) / bounds.width * 2 - 1;
-    targetY = (event.clientY - bounds.top) / bounds.height * 2 - 1;
+      pointer={id:event.pointerId,b,x:event.clientX,y:event.clientY,time:performance.now(),ox:event.clientX-b.x,oy:event.clientY-b.y,scrolling:false};
+      b.button.setPointerCapture(event.pointerId);
+      const grab=()=>{if(!pointer||pointer.scrolling)return;active=b;b.vx=b.vy=b.spin=0;b.button.classList.add('is-grabbed');};
+      if(event.pointerType==='touch')pointer.timer=setTimeout(grab,190);else grab();
+    });
+    b.button.addEventListener('pointermove',event=>{
+      if(!pointer||pointer.id!==event.pointerId)return;
+      const now=performance.now(),dt=Math.max(.008,(now-pointer.time)/1000);
+      const dx=event.clientX-pointer.x,dy=event.clientY-pointer.y;
+      if(!active){
+        if(Math.hypot(dx,dy)>3){pointer.scrolling=true;clearTimeout(pointer.timer);}
+        if(pointer.scrolling)window.scrollBy(0,-dy);
+      }else{
+        b.x=clamp(event.clientX-pointer.ox,b.r+5,width-b.r-5);
+        b.y=clamp(event.clientY-pointer.oy,headerBottom+b.r,height-b.r-8);
+        b.vx=clamp(dx/dt,-1600,1600);b.vy=clamp(dy/dt,-1600,1600);
+        b.spin=clamp((pointer.ox*dy-pointer.oy*dx)/Math.max(b.r*b.r,1)/dt,-7,7);
+        b.angle+=dx*.009;b.tilt+=dy*.006;
+      }
+      pointer.x=event.clientX;pointer.y=event.clientY;pointer.time=now;
+      if(paused)render(0);
+    });
+    for(const type of ['pointerup','pointercancel','lostpointercapture'])b.button.addEventListener(type,end);
+    b.button.addEventListener('contextmenu',event=>event.preventDefault());
+    b.button.addEventListener('keydown',event=>{
+      if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' ','Escape'].includes(event.key))return;
+      event.preventDefault();
+      if(event.key==='Escape')reset();
+      if(event.key===' '){b.angle+=.6;b.spin=1.5;}
+      const step=event.shiftKey?48:18;
+      if(event.key==='ArrowLeft')b.x-=step;if(event.key==='ArrowRight')b.x+=step;
+      if(event.key==='ArrowUp')b.y-=step;if(event.key==='ArrowDown')b.y+=step;
+      advance(b,0,{left:5,right:width-5,top:headerBottom,bottom:height-8});
+      render(0);schedule();
+    });
   });
-  function endDrag(event) {
-    if (event.pointerId === activePointer) activePointer = null;
+  pause.addEventListener('click',()=>{paused=!paused;labels();schedule();});
+  reduced.addEventListener('change',()=>{paused=reduced.matches;labels();schedule();});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden&&pointer)end({pointerId:pointer.id,type:'pointercancel'});schedule();});
+  window.addEventListener('blur',()=>{if(pointer)end({pointerId:pointer.id,type:'pointercancel'});});
+  window.addEventListener('resize',size);
+  window.addEventListener('scroll',()=>{dirty=true;if(paused){reset();render(0);}}, {passive:true});
+  new ResizeObserver(()=>{dirty=true;schedule();}).observe(document.querySelector('.hero'));
+  function theme(){
+    const light=document.documentElement.dataset.theme==='light';
+    modules.forEach(({outline},i)=>outline.color.set(light?(i===0?0x735531:0x315f49):(i===0?0xf5d19e:0xc7f2da)));
+    dirty=true;labels();schedule();
   }
-  canvas.addEventListener('pointerup', endDrag);
-  canvas.addEventListener('pointercancel', endDrag);
-  canvas.addEventListener('lostpointercapture', endDrag);
-  canvas.addEventListener('pointerleave', () => { targetX = targetY = 0; });
-  canvas.addEventListener('contextmenu', event => event.preventDefault());
-  canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();lost=true;schedule();host.parentElement.classList.remove('webgl-ready');});
-  canvas.addEventListener('webglcontextrestored',()=>{lost=false;resize();host.parentElement.classList.add('webgl-ready');schedule();});
-  host.parentElement.classList.add('webgl-ready');
+  new MutationObserver(theme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','lang']});
+  canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();cssOnly=true;layer.classList.add('css-glass');schedule();});
+  canvas.addEventListener('webglcontextrestored',()=>{cssOnly=false;layer.classList.remove('css-glass');size();schedule();});
+  labels();size();theme();instrument.classList.add('webgl-ready');
 }

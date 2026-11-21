@@ -17,23 +17,19 @@ GitHub Pages serves the root `index.html`; the compiled `assets/` are tracked, s
 
 ## Design and interaction
 
-- Original forest-green, mint and warm-gold palette with locally hosted Manrope and Cormorant Garamond.
-- Transparent full-width navigation backdrop, expressive editorial Hero, three original portfolio routes.
-- Three.js WebGL cubes with glass shells, a calibrated dial, processor layers, an optical aperture, independent rotation, pointer parallax and mouse drag.
-- The system opens automatically over four visible seconds. Reduced motion shows the final pose immediately. Touch keeps native vertical scrolling.
-- GSAP / ScrollTrigger entrances, scroll-linked composition and SVG parallax. Three new animated SVG illustrations represent experience, approach and working products.
-- Pause control, prefers-reduced-motion support, static SVG fallback, WebGL context-loss fallback.
-- Rendering stops outside the viewport and in hidden tabs; mobile pixel ratio capped at 1.4, desktop at 1.7. WebGL loads as a separate chunk. No scroll hijacking, videos, postprocessing or remote font calls.
+- Three independent glass cubes (SYSTEM, BUSINESS, PRODUCT) float in a viewport layer throughout the page. Throw velocity, damping, spin from the grab offset, edge bounces and pair collisions use CSS pixels per second.
+- Only cube handles receive pointer events. Text repels free cubes; overlap fades them and releases pointer interception. Links and navigation take priority. Below the Hero cubes shrink and settle toward the margins.
+- Mouse drag throws a cube. On touch, hold for 190 ms to grab; an immediate swipe over a handle scrolls the page. Elsewhere scrolling is native. Pointer cancellation, lost capture, blur and hidden tabs release a drag.
+- Keyboard: arrow keys move, Shift increases the step, Space spins, Escape resets. Pause stops autonomous motion; reduced-motion preference starts paused. An explicit Resume enables motion.
+- WebGL uses glass rim reflections and three restrained mechanisms. A CSS 3D renderer shares the interaction and physics if WebGL is unavailable or lost. The initial SVG remains until initialization completes.
+- Compact Hero, section spacing and cards preserve original text and links, bilingual copy, theme and navigation. Mobile body copy remains 16 px.
+- WebGL pixel ratio is capped at 1.4 on mobile and 1.7 on desktop. Hidden tabs suspend rendering.
 
-## Verification
+## Verification of this revision
 
-- Build and content/link parity checks passed.
-- Browser layout inspected at 320, 390, 768 and 1440 CSS pixels, including English and light theme. No horizontal overflow observed.
-- Language, theme, pause, automatic opening, keyboard controls and portfolio anchor checked.
-- No browser errors or warnings observed in the checked session.
-- All six unique external destinations returned HTTP 200.
-- JavaScript transfer budget approximately 194 KiB gzip; servers must enable HTTP compression to realize that transfer size.
-- Mobile checks use browser viewport simulation, not physical iOS/Android hardware. Lighthouse/Core Web Vitals and sustained real-device FPS were not measured. Reduced-motion and context-loss paths are implemented but were not exercised through OS/GPU failure simulation.
+- `npm run build`, `npm run check`, and `node --test scripts/physics.test.mjs` passed. Content and external URL parity are checked against the fetched main branch.
+- Five physics tests cover frame-rate consistency, boundary energy loss, collision response, coincident centres and avoidance from inside a text rectangle.
+- Browser: desktop drag and pause; 320/390/768 px embedded responsive previews; English/light theme at 390 px; portfolio anchor navigation at 320 px. Measured no horizontal document overflow at 320 and 390 px.
+- The verification browser cannot create WebGL: visual and interaction checks exercised the CSS 3D fallback. WebGL visuals and real-device touch gestures remain unverified. No sustained FPS, Core Web Vitals, physical Android or iOS measurements are claimed.
 
 The award ambition is a design direction; no Awwwards evaluation or award is claimed.
-

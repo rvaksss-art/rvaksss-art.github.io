@@ -54,7 +54,7 @@ export function engravedFace(parent, design, size, height = size) {
 
 export function polishedGlass(tint) {
   return new THREE.ShaderMaterial({
-    uniforms:{tint:{value:new THREE.Color(tint)}},
+    uniforms:{tint:{value:new THREE.Color(tint)},visibility:{value:1}},
     transparent:true,depthWrite:false,
     vertexShader:`
       varying vec3 surfaceNormal;
@@ -69,13 +69,14 @@ export function polishedGlass(tint) {
       varying vec3 surfaceNormal;
       varying vec3 sightline;
       uniform vec3 tint;
+      uniform float visibility;
       void main(){
         vec3 n = normalize(surfaceNormal);
         vec3 v = normalize(sightline);
         float rim = pow(1.-clamp(dot(n,v),0.,1.),3.);
         vec3 ray = reflect(-v,n);
         float ribbon = smoothstep(.92,.995,dot(ray,normalize(vec3(-.6,.7,.46))));
-        gl_FragColor = vec4(mix(tint,vec3(1.),ribbon*.80),.014+rim*.28+ribbon*.17);
+        gl_FragColor = vec4(mix(tint,vec3(1.),ribbon*.80),(.014+rim*.28+ribbon*.17)*visibility);
         #include <colorspace_fragment>
       }`
   });
