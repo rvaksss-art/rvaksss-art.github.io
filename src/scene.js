@@ -184,9 +184,9 @@ export function createScene(host) {
         b.spin*=Math.exp(-1.15*dt);
         b.tilt+=(.32+Math.sin(elapsed*.3+i)*.12-b.tilt)*dt;
       }
-      const over=rectangles.some(r=>b.x+b.r>r.left&&b.x-b.r<r.right&&b.y+b.r>r.top&&b.y-b.r<r.bottom);
       const coversLink=links.some(r=>b.x+side/2>r.left&&b.x-side/2<r.right&&b.y+side/2>r.top&&b.y-side/2<r.bottom);
-      b.button.style.pointerEvents=(over||coversLink)&&b!==active?'none':'auto';
+      // Hero copy must not disable a cube's drag target; keep actual links usable.
+      b.button.style.pointerEvents=coversLink&&b!==active?'none':'auto';
       b.button.style.setProperty('--cube-side',`${side}px`);
       b.button.querySelector('.glass-solid').style.transform=`rotateX(${b.tilt}rad) rotateY(${b.angle}rad) rotateZ(${Math.sin(b.angle*.4)*.12}rad)`;
       b.button.style.width=b.button.style.height=`${Math.max(44,side)}px`;

@@ -140,6 +140,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 
 /* Keep the desktop gateway in one viewport, with natural scrolling on short screens. */
 body:before{height:min(1100px,100svh)}
+.hero>div:first-child{-webkit-user-select:none;user-select:none}
 @media(min-width:761px){
   .wrap{min-height:100svh;display:flex;flex-direction:column}
   header.header.cinematic-header{height:72px!important;flex-shrink:0}
