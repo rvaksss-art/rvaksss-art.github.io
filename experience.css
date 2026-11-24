@@ -137,3 +137,41 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .glass-core.core-0{border-color:var(--gold);border-radius:50%}
 .glass-core.core-0:after{border-color:var(--gold);border-radius:50%}
 .glass-core.core-1{transform:rotateX(60deg) rotateZ(45deg);box-shadow:4px 4px 0 -1px var(--surface),5px 5px 0 0 var(--mint),9px 9px 0 -1px var(--surface),10px 10px 0 0 var(--mint)}
+
+/* Keep the desktop gateway in one viewport, with natural scrolling on short screens. */
+body:before{height:min(1100px,100svh)}
+@media(min-width:761px){
+  .wrap{min-height:100svh;display:flex;flex-direction:column}
+  header.header.cinematic-header{height:72px!important;flex-shrink:0}
+  main{flex:1;display:flex;flex-direction:column}
+  .hero{flex:1;padding:16px 0 12px;align-items:center}
+  .hero>div:first-child{align-self:center;margin-top:0}
+  .hero h1{font-size:clamp(46px,4.2vw,72px);margin-bottom:18px}
+  .eyebrow{margin-bottom:12px}
+  .instrument{height:clamp(240px,calc(100svh - 600px),440px);aspect-ratio:auto}
+  #projects{padding:0 0 16px}
+  .selection-heading{padding-top:12px;margin-bottom:12px}
+  .portal{min-height:0;padding:18px 22px}
+  .glyph{height:clamp(48px,calc(100svh - 900px),80px);margin:4px 0 8px}
+  .portal h3{font-size:36px;margin:4px 0 10px}
+  .portal p{font-size:15px;line-height:1.5;margin-bottom:12px}
+  .project-option{min-height:36px}
+  .card-bottom{padding-top:10px;min-height:43px}
+  .footer{flex-shrink:0;padding:4px 0 6px}
+}
+@media(min-width:761px) and (max-height:800px){
+  header.header.cinematic-header{height:64px!important}
+  .hero{padding-top:12px;padding-bottom:8px}
+  .hero h1{font-size:clamp(42px,3.8vw,60px);margin-bottom:14px}
+  .eyebrow{margin-bottom:10px}
+  .intro{font-size:15px;line-height:1.55}
+  .portal{padding:14px 18px}
+  .portal h3{font-size:32px;margin-bottom:8px}
+  .portal p{font-size:14px;margin-bottom:10px}
+  .project-option{min-height:32px}
+  .footer{padding:8px 0}
+}
+@media(max-width:760px){
+  .hero{padding-top:16px;padding-bottom:18px}
+  #projects{padding-top:8px}
+}
