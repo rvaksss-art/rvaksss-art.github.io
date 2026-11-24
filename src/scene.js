@@ -124,7 +124,7 @@ export function createScene(host) {
     const button=document.createElement('button'); button.className='cube-handle';
     button.innerHTML=`<i class="glass-solid" aria-hidden="true"><i class="glass-core core-${i}"></i>${Array.from({length:6},()=>'<i class="glass-face"></i>').join('')}</i><span>${name}</span>`; button.type='button';
     button.setAttribute('aria-describedby','cube-help'); layer.append(button);
-    return {cube,glass,outline,button,update:buildMechanism(i,mechanism),x:0,y:0,vx:0,vy:0,r:60,spin:0,angle:i*.4,tilt:.3,alpha:1};
+    return {cube,glass,outline,button,update:buildMechanism(i,mechanism),x:0,y:0,vx:0,vy:0,r:60,spin:0,angle:i*.4,tilt:.3};
   });
   const help=document.createElement('p'); help.id='cube-help'; help.className='cube-help';
   const controls=document.createElement('div'); controls.className='cube-controls';
@@ -145,13 +145,12 @@ export function createScene(host) {
     const hero=document.querySelector('.hero').getBoundingClientRect();
     const header=document.querySelector('.header').getBoundingClientRect();
     headerBottom=Math.max(12,header.bottom+12);
-    const top=Math.max(hero.top,headerBottom), bottom=Math.min(hero.bottom,height);
-    heroOnScreen=bottom-top>120;
+    heroOnScreen=hero.bottom>0&&hero.top<height;
     layer.hidden=!heroOnScreen;
     layer.style.clipPath=`inset(${Math.max(0,hero.top)}px ${Math.max(0,width-hero.right)}px ${Math.max(0,height-hero.bottom)}px ${Math.max(0,hero.left)}px)`;
-    bounds={left:Math.max(0,hero.left),right:Math.min(width,hero.right),top,bottom};
+    bounds={left:hero.left,right:hero.right,top:hero.top,bottom:hero.bottom};
     const small=width<761;
-    home=small?[[.22,.32],[.72,.34],[.48,.73]]:[[.68,.23],[.28,.49],[.67,.76]];
+    home=small?[[.22,.28],[.72,.28],[.48,.56]]:[[.68,.23],[.28,.49],[.67,.76]];
     home=home.map(([x,y])=>({x:area.left+area.width*x,y:area.top+area.height*y}));
     rectangles=[...document.querySelectorAll('.hero h1,.eyebrow,.intro,.hero-scroll,.selection-heading,.portal h3,.portal p,.card-top,.card-bottom,.project-options,.footer,.cube-controls')]
       .map(el=>el.getBoundingClientRect()).filter(r=>r.bottom>0&&r.top<height);
