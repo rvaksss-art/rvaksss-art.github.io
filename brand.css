@@ -29,3 +29,43 @@ html[data-portfolio-page="0"] .portal h3{font-family:var(--brand-font);font-weig
 .hero>div:first-child{user-select:text;-webkit-user-select:text}
 html[data-portfolio-page="0"] .eyebrow{font-size:11px;letter-spacing:.08em}
 html[data-portfolio-page="0"] .scene-label,html[data-portfolio-page="0"] .cube-handle span{color:var(--brand-mint)}
+
+/* Black Emerald — ALL dark theme only. */
+html[data-portfolio-page="0"]:not([data-theme="light"]){--brand-bg-all:#041510;--brand-heading:#F0F4EF;--brand-body:#CDDAD5;--brand-muted:#CDDAD5;--brand-mint:#B4E8CD;--brand-gold:#D4BE92;--brand-surface:#0A241C;--brand-line:#B4E8CD2B;--bg:#041510;--text:#F0F4EF;--muted:#CDDAD5;--mint:#B4E8CD;--gold:#D4BE92;--surface:#0A241C;--line:#B4E8CD2B}
+html[data-portfolio-page="0"]:not([data-theme="light"]) body{background-color:#041510;background-image:linear-gradient(135deg,#030D0A 0%,#041510 60%,#0C3022 100%);background-attachment:fixed}
+html[data-portfolio-page="0"]:not([data-theme="light"]) body:before{background:none}
+html[data-portfolio-page="0"]:not([data-theme="light"]) .scene-halo{background:radial-gradient(ellipse at center,#164A3573 0%,#164A3526 42%,transparent 72%);opacity:.55}
+html[data-portfolio-page="0"]:not([data-theme="light"]) .portal{background:#0A241C;border-color:#B4E8CD2B}
+html[data-portfolio-page="0"]:not([data-theme="light"]) .portal:before{background:radial-gradient(400px circle at var(--x,50%) var(--y,0%),#B4E8CD0B,transparent 70%)}
+html[data-portfolio-page="0"]:not([data-theme="light"]) .portal:is(:hover,:focus-within){border-color:#B4E8CD66;box-shadow:0 20px 70px #00000016}
+/* Distinct, restrained emerald surfaces for the three portfolio routes. */
+html[data-portfolio-page="0"]:not([data-theme="light"]) .portal .glyph>g{scale:1.25;transform-origin:150px 70px}
+html[data-portfolio-page="0"]:not([data-theme="light"]) .portal:nth-child(1){background:linear-gradient(135deg,#194638 0%,#10372A 100%);border-color:#B4E8CD38}
+html[data-portfolio-page="0"]:not([data-theme="light"]) .portal:nth-child(2){background:linear-gradient(135deg,#103026 0%,#0A241C 100%);border-color:#B4E8CD38}
+html[data-portfolio-page="0"]:not([data-theme="light"]) .portal:nth-child(3){background:linear-gradient(135deg,#091F18 0%,#061A13 100%);border-color:#B4E8CD38}
+html[data-portfolio-page="0"]:not([data-theme="light"]) .portal:is(:hover,:focus-within){border-color:#B4E8CD66}
+@media(max-width:760px){html[data-portfolio-page="0"]:not([data-theme="light"]) .portal .glyph>g{scale:1.12}}
+
+/* Unified SaaS typography: real Manrope weights for Cyrillic and Latin. */
+@font-face{font-family:Manrope;src:url('./assets/fonts/manrope-latin-400-normal.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap;unicode-range:U+0000-024F}
+@font-face{font-family:Manrope;src:url('./assets/fonts/manrope-cyrillic-400-normal.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap;unicode-range:U+0400-052F}
+@font-face{font-family:Manrope;src:url('./assets/fonts/manrope-latin-500-normal.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap;unicode-range:U+0000-024F}
+@font-face{font-family:Manrope;src:url('./assets/fonts/manrope-cyrillic-500-normal.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap;unicode-range:U+0400-052F}
+@font-face{font-family:Manrope;src:url('./assets/fonts/manrope-latin-600-normal.woff2') format('woff2');font-weight:600;font-style:normal;font-display:swap;unicode-range:U+0000-024F}
+@font-face{font-family:Manrope;src:url('./assets/fonts/manrope-cyrillic-600-normal.woff2') format('woff2');font-weight:600;font-style:normal;font-display:swap;unicode-range:U+0400-052F}
+
+html[data-portfolio-page] body{font-family:Manrope,'Segoe UI',sans-serif;font-weight:400;line-height:1.7;font-synthesis:none}
+html[data-portfolio-page] :is(h1,h2,h3,h4,h5,h6,p,a,button,summary,small,time,strong,b,.eyebrow,.section-label,.project-tag,.visual-top,.visual-bottom,.orbit-label,.orbital-hint,.orb-core,.orb-core span,.orb-core b,.metrics strong,.achievement strong,.project-num,.location,.languages,.selection-heading span,.footer span,.technical){font-family:Manrope,'Segoe UI',sans-serif}
+html[data-portfolio-page] :is(h2,h3,h4,h5,h6){font-weight:500;letter-spacing:-.02em;line-height:1.3}
+html[data-portfolio-page] :is(a,button,summary,.nav-page,.card-bottom,.project-option){font-weight:500;letter-spacing:0}
+html[data-portfolio-page] :is(p,small,time,.eyebrow,.section-label,.project-tag,.visual-top,.visual-bottom,.orbit-label,.orbital-hint,.location,.languages,.category,.index,.footer span){font-weight:400}
+html[data-portfolio-page] :is(strong,b){font-weight:500}
+html[data-portfolio-page] :is(.eyebrow,.section-label,.project-tag){letter-spacing:.06em;line-height:1.6}
+html[data-portfolio-page] :is(.intro,.portal p,.hero-desc,.prose p,.career ul,.project p){line-height:1.7;letter-spacing:0}
+html[data-portfolio-page="0"] .hero #heading,html[data-portfolio-page="0"] .hero #heading em{font-family:Manrope,'Segoe UI',sans-serif!important;font-weight:600;font-style:normal;letter-spacing:-.035em;line-height:1.13}
+html[data-portfolio-page="0"] .hero #heading{font-size:clamp(38px,3.7vw,60px)}
+html[data-portfolio-page="0"] .portal h3{font-weight:500;letter-spacing:-.025em;line-height:1.3}
+html[data-portfolio-page="1"] .hero h1[data-t="hero"]{font-weight:600;letter-spacing:-.025em;line-height:1.16}
+html[data-portfolio-page="1"] :is(h2,h3,.project h3){font-weight:500;letter-spacing:-.02em;line-height:1.3}
+@media(max-width:760px){html[data-portfolio-page="0"] .hero #heading{font-size:clamp(30px,8.4vw,50px);letter-spacing:-.03em;line-height:1.16}}
+@media(max-width:800px){html[data-portfolio-page="1"] .hero h1[data-t="hero"]{font-size:clamp(26px,7vw,46px)}}
