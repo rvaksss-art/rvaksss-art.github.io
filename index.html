@@ -2,8 +2,23 @@
 <html data-portfolio-page="0" lang="ru">
 <head>
 <!-- Google Analytics 4 -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-KMGRFRXFBL"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-KMGRFRXFBL')</script>
+<script>
+try {
+  const analyticsChoice = new URLSearchParams(location.search).get("analytics");
+  if (analyticsChoice === "off") localStorage.setItem("mk-analytics-opt-out", "1");
+  if (analyticsChoice === "on") localStorage.removeItem("mk-analytics-opt-out");
+  if (localStorage.getItem("mk-analytics-opt-out") !== "1") {
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function(){dataLayer.push(arguments)};
+    gtag("js", new Date());
+    gtag("config", "G-KMGRFRXFBL");
+    const tag = document.createElement("script");
+    tag.async = true;
+    tag.src = "https://www.googletagmanager.com/gtag/js?id=G-KMGRFRXFBL";
+    document.head.appendChild(tag);
+  }
+} catch {}
+</script>
 <!-- End Google Analytics 4 --><script>try{const s=localStorage,l=s.getItem('portfolio-lang')||s.getItem('mk-lang')||s.getItem('mk-portal-lang')||'ru';for(const k of ['portfolio-lang','mk-lang','mk-portal-lang'])s.setItem(k,l);document.documentElement.lang=l==='en'?'en':'ru';document.documentElement.dataset.theme=s.getItem('mk-theme')==='light'?'light':'dark'}catch{}</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
