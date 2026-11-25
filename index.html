@@ -3,21 +3,37 @@
 <head>
 <!-- Google Analytics 4 -->
 <script>
-try {
-  const analyticsChoice = new URLSearchParams(location.search).get("analytics");
-  if (analyticsChoice === "off") localStorage.setItem("mk-analytics-opt-out", "1");
-  if (analyticsChoice === "on") localStorage.removeItem("mk-analytics-opt-out");
-  if (localStorage.getItem("mk-analytics-opt-out") !== "1") {
-    window.dataLayer = window.dataLayer || [];
-    window.gtag = function(){dataLayer.push(arguments)};
-    gtag("js", new Date());
-    gtag("config", "G-KMGRFRXFBL");
-    const tag = document.createElement("script");
-    tag.async = true;
-    tag.src = "https://www.googletagmanager.com/gtag/js?id=G-KMGRFRXFBL";
-    document.head.appendChild(tag);
+(() => {
+  const choice = new URLSearchParams(location.search).get('analytics');
+  const key = 'mk-analytics-opt-out';
+  if (choice === 'off' || choice === 'on') {
+    const disabled = choice === 'off';
+    try { disabled ? localStorage.setItem(key, '1') : localStorage.removeItem(key); } catch {}
+    document.cookie = key + '=' + (disabled ? '1' : '0') + '; Max-Age=31536000; Path=/; SameSite=Lax; Secure';
   }
-} catch {}
+  let stored = false;
+  try { stored = localStorage.getItem(key) === '1'; } catch {}
+  const disabled = choice === 'off' || (choice !== 'on' && (stored || document.cookie.split('; ').includes(key + '=1')));
+  document.documentElement.dataset.analytics = disabled ? 'off' : 'on';
+  if (choice === 'off' || choice === 'on') {
+    addEventListener('DOMContentLoaded', () => {
+      const notice = document.createElement('div');
+      notice.setAttribute('role', 'status');
+      notice.textContent = disabled ? 'Аналитика отключена в этом браузере' : 'Аналитика включена в этом браузере';
+      Object.assign(notice.style, {position:'fixed',left:'16px',bottom:'16px',zIndex:'1000',padding:'10px 14px',borderRadius:'10px',background:'#0A241C',color:'#B4E8CD',border:'1px solid #B4E8CD66',font:'500 13px Manrope, sans-serif',boxShadow:'0 8px 24px #0005'});
+      document.body.appendChild(notice);
+    }, {once:true});
+  }
+  if (disabled) return;
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function(){dataLayer.push(arguments)};
+  gtag('js', new Date());
+  gtag('config', 'G-KMGRFRXFBL');
+  const tag = document.createElement('script');
+  tag.async = true;
+  tag.src = 'https://www.googletagmanager.com/gtag/js?id=G-KMGRFRXFBL';
+  document.head.appendChild(tag);
+})();
 </script>
 <!-- End Google Analytics 4 --><script>try{const s=localStorage,l=s.getItem('portfolio-lang')||s.getItem('mk-lang')||s.getItem('mk-portal-lang')||'ru';for(const k of ['portfolio-lang','mk-lang','mk-portal-lang'])s.setItem(k,l);document.documentElement.lang=l==='en'?'en':'ru';document.documentElement.dataset.theme=s.getItem('mk-theme')==='light'?'light':'dark'}catch{}</script>
 <meta charset="utf-8">
