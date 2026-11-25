@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="./portfolio-header.css">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="./assets/fonts/manrope-cyrillic-600-normal.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="./assets/fonts/manrope-latin-600-normal.woff2">
-<link rel="stylesheet" href="./experience.css?v=hero-drag-20261125-7">
+<link rel="stylesheet" href="./experience.css?v=hero-cubes-20261125-8">
 <style id="hero-serif-critical">
 /* Keep both heading runs serif even while external styles and webfonts load. */
 .hero #heading,
@@ -34,19 +34,7 @@
 <div class="scene-halo" aria-hidden="true"></div><div id="cube-stage" aria-hidden="true"></div>
 <div class="scene-label label-system">SYSTEM</div><div class="scene-label label-business">BUSINESS</div><div class="scene-label label-product">PRODUCT</div>
 
-<svg class="scene-fallback" viewBox="0 0 400 320" fill="none" aria-hidden="true">
-<defs><lineargradient id="glass" x1="100" y1="50" x2="300" y2="240" gradientUnits="userSpaceOnUse"><stop stop-color="#b3e8cd" stop-opacity=".18" /><stop offset=".55" stop-color="#b3e8cd" stop-opacity=".03" /><stop offset="1" stop-color="#b3e8cd" stop-opacity=".09" /></lineargradient><lineargradient id="edge"><stop stop-color="#b3e8cd" stop-opacity=".12" /><stop offset=".5" stop-color="#b3e8cd" stop-opacity=".8" /><stop offset="1" stop-color="#b3e8cd" stop-opacity=".2" /></lineargradient><radialgradient id="glow"><stop stop-color="#b3e8cd" stop-opacity=".8" /><stop offset="1" stop-color="#b3e8cd" stop-opacity="0" /></radialgradient></defs>
-<path d="M200 18v274M36 155h328" stroke="#b3e8cd" stroke-opacity=".09" stroke-dasharray="2 6" />
-<ellipse cx="200" cy="177" rx="155" ry="94" stroke="#b3e8cd" stroke-opacity=".08" />
-<g class="diamond bottom-plate"><path d="m200 135 130 71-130 72L70 206z" fill="url(#glass)" stroke="url(#edge)" /><path d="m70 206 130 72 130-72" stroke="#b3e8cd" stroke-opacity=".35" /></g>
-<path d="M70 113v93m260-93v93M200 42v93m0 50v93" stroke="#b3e8cd" stroke-opacity=".17" stroke-dasharray="2 5" />
-<path d="m200 91 130 71-130 72L70 162z" fill="url(#glass)" stroke="url(#edge)" />
-<path d="M70 113v93m260-93v93M200 42v93m0 50v93" stroke="#c8f7df" stroke-opacity=".7" class="signal" />
-<g class="diamond top-plate"><path d="m200 42 130 71-130 72L70 113z" fill="url(#glass)" stroke="url(#edge)" /><path d="m200 70 80 43-80 44-80-44z" stroke="#b3e8cd" stroke-opacity=".15" /><path d="m200 95 33 18-33 18-33-18z" fill="#b3e8cd" fill-opacity=".08" stroke="#b3e8cd" stroke-opacity=".5" /><circle cx="200" cy="113" r="20" fill="url(#glow)" opacity=".25" class="pin" /><circle cx="200" cy="113" r="2.5" fill="#d9ffe9" /></g>
-<circle cx="70" cy="206" r="2" fill="#b3e8cd" class="pin" /><circle cx="330" cy="162" r="2" fill="#d7c6a5" class="pin" />
-<path d="M330 113h30m-160 165v17M40 162h30" stroke="#b3e8cd" stroke-opacity=".3" />
-<text x="272" y="82" class="technical">BUSINESS</text><text x="14" y="153" class="technical">SYSTEM</text><text x="213" y="296" class="technical">PRODUCT</text>
-</svg>
+
 </div>
 </section>
 <section id="projects" aria-labelledby="routes-heading"><div class="selection-heading"><h2 data-copy="14" id="routes-heading">Опыт · Подход · Проекты</h2><span>01 — 03</span></div>
@@ -72,6 +60,6 @@ const button=document.querySelector(casePage?'#portfolio-language':page==='0'?'#
 const theme=document.querySelector('#portal-theme');if(theme)theme.addEventListener('click',()=>{const value=document.documentElement.dataset.theme==='light'?'dark':'light';document.documentElement.dataset.theme=value;try{localStorage.setItem('mk-theme',value)}catch{}labels()});
 if(!demo)writeLanguage();apply();if(casePage&&typeof current==='number'&&current>=0)fitCardCopy(cards[current]);if(!demo)new MutationObserver(()=>{lang=document.documentElement.lang;writeLanguage();apply()}).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});if(!demo){const observer=new MutationObserver(records=>{observer.disconnect();for(const record of records){if(record.type==='characterData')translate(record.target);else for(const node of record.addedNodes)if(node.nodeType===1||node.nodeType===3)translate(node)}observer.observe(document.body,{subtree:true,childList:true,characterData:true})});observer.observe(document.body,{subtree:true,childList:true,characterData:true})}
 })();
-</script><script type="module" src="./assets/experience.js?v=hero-drag-20261125-7"></script></body>
+</script><script type="module" src="./assets/experience.js?v=hero-cubes-20261125-8"></script></body>
 </html>
 
